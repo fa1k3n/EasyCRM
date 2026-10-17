@@ -1,0 +1,62 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>TypeScript-bygge</title>
+<!-- Kör TypeScript-kompilatorn (typescript-6.0.3, nedladdad från npm) i Edge, eftersom Node inte kan installeras.
+     Startas av tools\tsc.ps1 med ?dir=<file-URL till mappen med tsconfig.json>. Läser filer med synkron XHR,
+     vilket kräver att Edge startas med --allow-file-access-from-files. Resultatet skrivs base64-kodat i #out. -->
+<pre id="out">TSRESULT väntar</pre>
+<script src="typescript-6.0.3/lib/typescript.js"></script>
+<script>
+(function () {
+  'use strict';
+  var out = document.getElementById('out');
+  function done(r) { out.textContent = 'TSRESULT ' + btoa(unescape(encodeURIComponent(JSON.stringify(r)))) + ' END'; }
+  try {
+    var dir = new URLSearchParams(location.search).get('dir');
+    if (!dir) throw new Error('Parametern ?dir= saknas');
+    if (!/\/$/.test(dir)) dir += '/';
+    var libDir = new URL('typescript-6.0.3/lib/', location.href).href;
+    var cache = {};
+    // Virtuella sökvägar: /proj/... = projektmappen, /lib/... = TypeScripts typfiler
+    function toUrl(p) { return p.indexOf('/lib/') === 0 ? libDir + p.slice(5) : p.indexOf('/proj/') === 0 ? dir + p.slice(6) : null; }
+    function readFile(p) {
+      if (p in cache) return cache[p];
+      var url = toUrl(p), text;
+      if (url) {
+        var x = new XMLHttpRequest();
+        try { x.open('GET', url, false); x.overrideMimeType('text/plain; charset=utf-8'); x.send(); if ((x.status === 0 || x.status === 200) && x.responseText !== '') text = x.responseText; } catch (e) {}
+      }
+      return (cache[p] = text);
+    }
+    var cfgText = readFile('/proj/tsconfig.json');
+    if (cfgText === undefined) throw new Error('Hittar inte tsconfig.json i ' + dir);
+    var cfgJson = ts.parseConfigFileTextToJson('/proj/tsconfig.json', cfgText);
+    var parseHost = { useCaseSensitiveFileNames: true, readDirectory: function () { return []; }, fileExists: function (p) { return readFile(p) !== undefined; }, readFile: readFile };
+    var parsed = ts.parseJsonConfigFileContent(cfgJson.config || {}, parseHost, '/proj', undefined, '/proj/tsconfig.json');
+    var outputs = {};
+    var host = {
+      getSourceFile: function (p, lang) { var t = readFile(p); return t === undefined ? undefined : ts.createSourceFile(p, t, lang); },
+      getDefaultLibFileName: function (o) { return '/lib/' + ts.getDefaultLibFileName(o); },
+      writeFile: function (p, data) { outputs[p] = data; },
+      getCurrentDirectory: function () { return '/proj'; },
+      getCanonicalFileName: function (p) { return p; },
+      useCaseSensitiveFileNames: function () { return true; },
+      getNewLine: function () { return '\n'; },
+      fileExists: function (p) { return readFile(p) !== undefined; },
+      readFile: readFile,
+      directoryExists: function () { return true; },
+      getDirectories: function () { return []; }
+    };
+    var program = ts.createProgram(parsed.fileNames, parsed.options, host);
+    var diags = [].concat(cfgJson.error ? [cfgJson.error] : [], parsed.errors, ts.getPreEmitDiagnostics(program));
+    var emitted = diags.length ? { diagnostics: [] } : program.emit();
+    diags = diags.concat(emitted.diagnostics);
+    var fmtHost = { getCanonicalFileName: function (p) { return p; }, getCurrentDirectory: function () { return '/proj'; }, getNewLine: function () { return '\n'; } };
+    var files = {};
+    Object.keys(outputs).forEach(function (p) { files[p.replace(/^\/proj\//, '')] = outputs[p]; });
+    done({ ok: diags.length === 0, version: ts.version, diagnostics: ts.formatDiagnostics(diags, fmtHost), files: files });
+  } catch (e) {
+    done({ ok: false, version: (window.ts && ts.version) || '?', diagnostics: 'Byggfel: ' + ((e && e.stack) || e), files: {} });
+  }
+})();
+</script>

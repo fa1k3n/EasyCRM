@@ -1,0 +1,1109 @@
+<title>Kundregister</title>
+<style>
+/* Utseendet styrs av varumärket (brand.js): färger, typsnitt, logga och kundtypernas färger sätts när sidan laddas.
+   Värdena nedan är reserv om varumärket saknas och är exakt det som deriveColors ger exempelföretaget (logic.ts EXAMPLE_BRAND). Layout: kundlista till vänster, kundkort till höger; rött markerar kunder som väntar på kontakt. */
+:root{
+  --bg:#f6f7f7; --surface:#ffffff; --sunk:#e5e7e7; --ink:#1f2933; --text:#4e565e; --muted:#646b72; --line:#dadcde;
+  --accent:#0f766e; --accent-hover:#0d635c; --accent-ink:#ffffff; --brand-soft:#cce0de; --focus:#0f766e;
+  --info:#1d4ed8;
+  --tally:#b4232f; --tally-soft:#fbe3e3; --amber:#946010; --amber-soft:#f6ead2; --ok:#2e7a4c;
+  --event:#6b4fb3; --event-soft:#eeeaf8; --ok-soft:#e2f1e7;
+  --shadow:0 1px 2px rgba(31,41,51,.05),0 10px 28px rgba(31,41,51,.08);
+  --f-display:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-body:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141b21; --surface:#20262c; --sunk:#293035; --ink:#fbfcfc; --text:#d1d4d5; --muted:#a3a7a9; --line:#30363c;
+  --accent:#3a8f88; --accent-hover:#579f9a; --accent-ink:#141b21; --brand-soft:#132f32; --focus:#3a8f88;
+  --info:#93c5fd;
+  --tally:#ff6b6b; --tally-soft:#3a1a1d; --amber:#e3a94e; --amber-soft:#33270f; --ok:#5cc28a;
+  --event:#b39cf0; --event-soft:#241c36; --ok-soft:#16291e;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px rgba(0,0,0,.35); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141b21; --surface:#20262c; --sunk:#293035; --ink:#fbfcfc; --text:#d1d4d5; --muted:#a3a7a9; --line:#30363c;
+  --accent:#3a8f88; --accent-hover:#579f9a; --accent-ink:#141b21; --brand-soft:#132f32; --focus:#3a8f88;
+  --info:#93c5fd;
+  --tally:#ff6b6b; --tally-soft:#3a1a1d; --amber:#e3a94e; --amber-soft:#33270f; --ok:#5cc28a;
+  --event:#b39cf0; --event-soft:#241c36; --ok-soft:#16291e;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px rgba(0,0,0,.35); color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font:14.5px/1.55 var(--f-body);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-weight:500}
+
+.app{display:flex;flex-direction:column;height:100%;padding-inline:16px;max-width:1440px;margin-inline:auto}
+
+/* Top bar */
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px;padding-block:18px 14px}
+.brand{display:flex;align-items:center;gap:12px;margin-right:auto}
+.logo-wrap{position:relative;flex:none;width:44px;height:44px}
+.logo{display:block;width:44px;height:44px;object-fit:contain}
+.brand h1{font:600 22px/1.1 var(--f-display);letter-spacing:-.02em;margin:0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+/* Etikett i accentfärg bredvid företagsnamnet */
+.brand h1 b{font-weight:inherit}
+.banner.brand-error{border-color:var(--tally);background:var(--tally-soft);color:var(--tally)}
+.brand h1 span{font:600 10.5px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink);background:var(--accent);padding:6px 10px;border-radius:99px}
+/* Röd prick på logotypen när någon kund väntar på kontakt */
+.tally-lamp{display:none;position:absolute;right:-2px;top:-2px;width:14px;height:14px;border-radius:50%;background:var(--tally);box-shadow:0 0 0 3px var(--bg)}
+.tally-lamp.on{display:block}
+.stats{display:flex;gap:6px;flex-wrap:wrap}
+.stat{display:flex;align-items:baseline;gap:8px;padding:6px 14px;border:1px solid var(--line);border-radius:999px;background:var(--surface);cursor:pointer;font-size:13px;color:var(--muted)}
+.stat b{font:600 15px var(--f-mono);font-variant-numeric:tabular-nums;color:var(--ink)}
+.stat.alert{border-color:var(--tally);background:var(--tally-soft);color:var(--tally)}
+.stat.alert b{color:var(--tally)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:99px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-weight:500;font-size:14px;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+.btn.primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{color:var(--ink);background:var(--sunk)}
+.btn.danger{color:var(--tally)}
+.btn.small{padding:4px 10px;font-size:13px}
+.btn kbd{font:11px var(--f-mono);opacity:.6;border:1px solid currentColor;border-radius:4px;padding:0 4px}
+
+/* Toolbar */
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding-block:4px 14px;border-bottom:1px solid var(--line)}
+.search{flex:1 1 220px;min-width:0;position:relative}
+.search input{width:100%;padding:9px 14px 9px 38px;border:1px solid var(--line);border-radius:99px;background:var(--surface)}
+.search svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.seg{display:flex;background:var(--sunk);border-radius:99px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{border:0;background:transparent;padding:6px 12px;border-radius:99px;cursor:pointer;font-size:13.5px;color:var(--text);font-weight:500}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.seg button .n{font:600 12px var(--f-mono);font-variant-numeric:tabular-nums;margin-left:4px;opacity:.7}
+select.sort{padding:8px 14px;border:1px solid var(--line);border-radius:99px;background:var(--surface);font-size:13.5px}
+
+/* Split */
+.split{flex:1;min-height:0;display:grid;grid-template-columns:minmax(300px,400px) 1fr;gap:0}
+.list{overflow-y:auto;border-right:1px solid var(--line);padding-block:8px;padding-right:12px;min-width:0}
+.detail{overflow-y:auto;min-width:0;padding:20px 0 40px 28px}
+
+.row{display:grid;grid-template-columns:4px 1fr auto;gap:0 12px;width:100%;text-align:left;border:0;background:transparent;padding:11px 12px 11px 0;border-radius:14px;cursor:pointer;align-items:start}
+.row:hover{background:var(--sunk)}
+.row[aria-current="true"]{background:var(--surface);box-shadow:var(--shadow)}
+.row .stripe{grid-row:1/span 2;align-self:stretch;border-radius:2px;background:transparent}
+.row.over .stripe{background:var(--tally)}
+.row.never .stripe,.row.warn .stripe{background:var(--amber)}
+.row .who{min-width:0}
+.row .name{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .sub{display:block;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.row .lastmail{grid-column:2/span 2;font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:4px}
+.days{font:600 12.5px var(--f-mono);font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
+.over .days,.days.over{color:var(--tally)}
+.warn .days,.never .days,.days.warn,.days.never{color:var(--amber)}
+
+.pill{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:999px;border:1px dashed var(--muted);color:var(--muted)}
+.pill.tally{border:0;background:var(--tally);color:#fff}
+
+.empty{padding:40px 20px;text-align:center;color:var(--muted)}
+.empty h3{color:var(--ink);font:600 17px var(--f-display);margin:0 0 6px}
+
+/* Detail */
+.d-head{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-start;justify-content:space-between}
+.d-head h2{font:500 clamp(26px,3.2vw,36px)/1.1 var(--f-display);letter-spacing:-.025em;margin:4px 0 6px;text-wrap:balance}
+.d-head .person{color:var(--muted);font-size:15px}
+.d-tags{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.d-actions{display:flex;gap:6px;flex-wrap:wrap}
+.back{display:none}
+
+.alert-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin-top:18px;padding:12px 16px;border-radius:16px;background:var(--tally-soft);color:var(--tally)}
+.alert-bar.amber{background:var(--amber-soft);color:var(--amber)}
+.alert-bar strong{font-weight:600}
+.alert-bar .big{font:600 24px var(--f-mono);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.alert-bar .btn{margin-left:auto}
+
+.contact{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;margin-top:20px;background:var(--line);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.contact > div{background:var(--surface);padding:10px 14px;min-width:0}
+.label{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.contact .val{display:flex;align-items:center;gap:8px;min-width:0}
+.contact .val span,.contact .val a{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;user-select:all}
+.contact a{color:inherit}
+.icon-btn{border:0;background:transparent;cursor:pointer;color:var(--muted);padding:3px;border-radius:5px;display:inline-flex;flex:none}
+.icon-btn:hover{color:var(--ink);background:var(--sunk)}
+
+.cols{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:28px;margin-top:28px}
+.section h3{font:600 13px var(--f-display);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;display:flex;justify-content:space-between;align-items:center}
+
+.quick{display:grid;grid-template-columns:auto auto 1fr;gap:8px;padding:12px;border:1px solid var(--line);border-radius:16px;background:var(--surface)}
+.quick input,.quick select,.quick textarea,.form input,.form select,.form textarea{padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--bg);min-width:0;width:100%}
+.quick textarea{grid-column:1/-1;resize:vertical;min-height:38px}
+.quick .full{grid-column:1/-1}
+.quick .foot{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px}
+
+.timeline{list-style:none;margin:14px 0 0;padding:0}
+.timeline li{display:grid;grid-template-columns:92px 1fr auto;gap:2px 12px;padding:10px 0;border-top:1px solid var(--line)}
+.timeline li:first-child{border-top:0}
+.timeline .when{font:500 13px var(--f-mono);font-variant-numeric:tabular-nums;color:var(--muted)}
+.timeline .kind{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.timeline .kind.mail_ut{color:var(--info)}
+.timeline .subj{font-weight:500}
+.timeline .note{color:var(--text);font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere}
+.timeline .body{min-width:0}
+.timeline li.latest-mail .when{color:var(--ink)}
+.pill.event{border:0;background:var(--event);color:#fff}
+.stat.event{border-color:var(--event);background:var(--event-soft);color:var(--event)}
+.stat.event b{color:var(--event)}
+.row .evline{grid-column:2/span 2;font-size:12.5px;font-weight:500;color:var(--event);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.row.has-event:not([aria-current="true"]){background:var(--event-soft)}
+.row.has-event:not([aria-current="true"]):hover{background:var(--sunk)}
+.events{margin-top:20px;padding:14px 16px;border-radius:16px;border:1px solid var(--event);background:var(--event-soft)}
+.events-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.events h3{font:600 13px var(--f-display);letter-spacing:.07em;text-transform:uppercase;color:var(--event);margin:0}
+.evlist{list-style:none;margin:10px 0 0;padding:0}
+.evlist li{display:grid;grid-template-columns:92px 1fr auto;gap:2px 12px;padding:10px 0;border-top:1px solid var(--line);align-items:start}
+.evlist li:first-child{border-top:0}
+.evdate{font-size:13px;font-weight:500;color:var(--event)}
+.evtitle{font-weight:600;overflow-wrap:anywhere}
+.evwhy{font-size:14px;color:var(--muted);margin-top:2px;max-width:70ch}
+.evlist a{color:var(--event);font-weight:500;text-decoration:none}
+.evlist a:hover{text-decoration:underline}
+.evform{margin-top:10px;background:var(--surface)}
+.pill.event.offer{background:var(--tally);border-color:var(--tally);color:#fff;cursor:pointer}
+.pill.event.offer:hover{filter:brightness(1.12)}
+.row .evline.open{color:var(--tally);cursor:pointer}
+.row .evline.open:hover{text-decoration:underline}
+.evlist li.open{border-left:3px solid var(--tally);padding-left:10px}
+.evlist li.flash{animation:evflash 1.6s ease-out}
+@keyframes evflash{0%,40%{background:var(--tally-soft)}100%{background:transparent}}
+.ev-open{color:var(--tally);font-weight:600}
+.pill.event.soon{background:transparent;border:1px solid var(--event);color:var(--event)}
+.evbang{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;background:var(--tally);color:#fff;font-size:10.5px;font-weight:700;line-height:1}
+/* Kundtyper som små ikoner, lite större än ★ och ✉ */
+.ticons{display:inline-flex;gap:5px;align-items:center}
+.ticon{display:inline-flex;color:var(--tc)}
+.ticon svg{display:block}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.tchip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--tc)}
+.typepick{display:flex;flex-wrap:wrap;gap:8px;border:0;padding:0;margin:0}
+.typepick legend{margin-bottom:6px}
+.tpick{display:inline-flex;align-items:center;gap:6px;padding:6px 12px 6px 8px;border:1px solid var(--line);border-radius:99px;cursor:pointer;font-weight:500;background:var(--bg)}
+.tpick input{margin:0;accent-color:var(--accent)}
+.tpick:has(input:checked){border-color:var(--tc,var(--ink));background:var(--surface)}
+.tphint{flex:1 1 100%}
+.pill.followev{border:1px solid var(--ok);color:var(--ok);background:var(--ok-soft)}
+.evconf{margin-top:6px;padding:6px 10px;border-radius:8px;background:var(--amber-soft);color:var(--amber);font-size:13px;overflow-wrap:anywhere}
+.evfree{margin-top:4px;color:var(--ok)}
+.evdone{margin-top:12px;padding-top:10px;border-top:1px dashed var(--event)}
+.bookings{margin-top:20px;padding:14px 16px;border-radius:16px;border:1px solid var(--line);background:var(--surface)}
+.bookings h3{font:600 13px var(--f-display);letter-spacing:.07em;text-transform:uppercase;color:var(--info);margin:0;display:flex;align-items:center;gap:6px}
+.bklist{list-style:none;margin:10px 0 0;padding:0}
+.bklist li{display:grid;grid-template-columns:92px 1fr auto;gap:2px 12px;padding:10px 0;border-top:1px solid var(--line);align-items:start}
+.bklist li:first-child{border-top:0}
+.bkdate{font-size:13px;color:var(--ink)}
+.bkdate span{color:var(--info)}
+.bktitle{font-weight:500;overflow-wrap:anywhere}
+.bkkind{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--info)}
+.bkform{margin-top:10px;background:var(--bg)}
+.fu-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+.fu-row .label{flex:1 1 100%}
+.fu-row input{padding:7px 10px;border:1px solid var(--line);border-radius:7px;background:var(--bg);min-width:0}
+.fu-row input[type="text"]{flex:1 1 200px}
+.row .bkline{grid-column:2/span 2;display:flex;align-items:center;gap:5px;font-size:12.5px;font-weight:500;color:var(--info);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.evsrc{margin-top:4px}
+.evact{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.btn.offer{border-color:var(--event);color:var(--event);background:var(--surface)}
+.btn.offer:hover{background:var(--event);color:var(--surface)}
+.ev-offered{margin-top:4px;font-size:12.5px;font-weight:500;color:var(--ok)}
+.evlist li.offered{background:var(--ok-soft);border:1px solid var(--ok);border-radius:8px;padding-inline:10px;margin-block:6px}
+.evlist li.offered + li{border-top:0}
+.evlist li.offered .evdate{color:var(--ok)}
+.evhidden{margin-top:10px}
+.evhidden > summary{cursor:pointer;font-size:13px;font-weight:500;color:var(--event);width:fit-content;border-radius:6px;padding:2px 6px;margin-left:-6px}
+.evhidden > summary:hover{background:var(--surface)}
+.evlist li.hidden-ev .evbody,.evlist li.hidden-ev .evdate{opacity:.65}
+@media (max-width:520px){.evlist li{grid-template-columns:1fr auto}.evdate{grid-column:1/-1}}
+.timeline details > summary{list-style:none;cursor:pointer;border-radius:6px;margin:-4px -6px;padding:4px 6px}
+.timeline details > summary::-webkit-details-marker{display:none}
+.timeline details > summary:hover{background:var(--sunk)}
+.timeline .more{font-size:12.5px;color:var(--info);font-weight:500;margin-top:2px}
+.timeline .more::after{content:"Visa hela mailet ▾"}
+.timeline details[open] .more::after{content:"Dölj mailet ▴"}
+.timeline .note.sum{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:normal}
+.timeline .mailbody{margin-top:10px;padding:12px 14px;border-left:3px solid var(--info);background:var(--surface);border-radius:0 8px 8px 0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.55;max-width:70ch}
+.flag{font-size:11px;font-weight:600;color:var(--info);margin-left:6px;text-transform:uppercase;letter-spacing:.04em}
+
+.jobs{list-style:none;margin:14px 0 0;padding:0}
+.jobs li{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:10px 0;border-top:1px solid var(--line)}
+.jobs li:first-child{border-top:0}
+.jobs .title{font-weight:500;min-width:0;overflow-wrap:anywhere}
+.jobs .sub{font-size:13px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap}
+.jobs a.inv{display:inline-flex;align-items:center;gap:4px;color:var(--info);font-weight:500;text-decoration:none}
+.jobs a.inv:hover{text-decoration:underline}
+.jobs .noinv{color:var(--amber)}
+.inv-st{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.inv-st.paid,.inv-st.overPaid{color:var(--ok)}
+.inv-st.overdue{color:var(--tally)}
+.inv-st.underPaid{color:var(--amber)}
+.notes{color:var(--text);white-space:pre-wrap;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow-wrap:anywhere}
+.muted{color:var(--muted)}
+.mini{font-size:13px}
+
+.why{margin-top:20px;padding:12px 14px;border-radius:16px;background:var(--sunk)}
+.why p{margin:4px 0 0;max-width:70ch}
+.why a{color:inherit}
+.warn-t{color:var(--amber);font-weight:600}
+.draft{margin-top:20px;padding:16px;border:1px dashed var(--muted);border-radius:16px;background:var(--surface);display:grid;gap:4px}
+.draft-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.draft-head h3{font:600 13px var(--f-display);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0}
+.draft .label{margin-top:8px}
+.d-subj{font-weight:600}
+.d-body{white-space:pre-wrap;overflow-wrap:anywhere;max-width:70ch;line-height:1.55}
+.draft-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;align-items:center}
+.draft-actions .spacer{flex:1}
+a.btn{text-decoration:none;color:inherit}
+.pill.suggest{border:1px solid var(--info);color:var(--info)}
+.banner{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:8px 12px;margin-top:10px;border-radius:8px;background:var(--sunk);font-size:13.5px;color:var(--muted)}
+
+/* Modal */
+.overlay{position:fixed;inset:0;background:rgba(10,12,14,.45);display:grid;place-items:center;padding:16px;z-index:20}
+.modal{background:var(--surface);border-radius:20px;box-shadow:var(--shadow);width:min(560px,100%);max-height:calc(100% - 32px);overflow:auto;padding:22px}
+.modal.wide{width:min(720px,100%)}
+.modal h3{font:600 22px var(--f-display);letter-spacing:-.02em;margin:0 0 16px;text-wrap:balance}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form label{display:flex;flex-direction:column;gap:4px;min-width:0}
+.form .full{grid-column:1/-1}
+.form textarea{min-height:80px;resize:vertical}
+.modal .foot{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.err{color:var(--tally);font-size:13px}
+.offer-tags{display:flex;flex-wrap:wrap;gap:6px;margin:-6px 0 16px}
+.offer-tag{font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--sunk);color:var(--muted)}
+.offer-tag.first{background:var(--info);color:var(--surface)}
+.form textarea#offer-body{min-height:320px;line-height:1.5}
+.modal .foot.offer-foot{flex-wrap:wrap}
+.offer-hint{margin:10px 0 0;max-width:70ch}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:14px;z-index:30;box-shadow:var(--shadow)}
+
+.placeholder{height:100%;display:grid;place-items:center;text-align:center;color:var(--muted);padding:20px}
+.placeholder h3{color:var(--ink);font:600 18px var(--f-display);margin:0 0 6px}
+
+@media (max-width: 860px){
+  .split{grid-template-columns:1fr}
+  .list{border-right:0;padding-right:0}
+  .detail{padding:12px 0 40px}
+  .app:not(.has-sel) .detail{display:none}
+  .app.has-sel .list{display:none}
+  .back{display:inline-flex}
+  .cols{grid-template-columns:1fr}
+  .app.has-sel .toolbar{display:none}
+}
+@media (max-width: 520px){
+  .form{grid-template-columns:1fr}
+  .quick{grid-template-columns:1fr 1fr}
+  .quick .subj-in{grid-column:1/-1}
+  .timeline li{grid-template-columns:1fr auto}
+  .timeline .when{grid-column:1/-1}
+  .btn kbd{display:none}
+}
+@media (prefers-reduced-motion: no-preference){
+  .row,.btn,.stat{transition:background-color .12s,border-color .12s}
+}
+
+/* Telefon: navigeringen på två rader och hela sidan scrollar, så att kundlistan får plats */
+.filter-toggle{display:none}
+.filter-toggle.active::after{content:"";width:7px;height:7px;border-radius:50%;background:var(--info)}
+@media (max-width: 860px){
+  html,body{height:auto}
+  .app{height:auto;min-height:100%}
+  .split{flex:none}
+  .list,.detail{overflow:visible}
+  .list{padding-block:2px 24px}
+  .top{flex-wrap:nowrap;gap:12px;padding-block:10px 8px}
+  .brand{min-width:0;gap:10px}
+  .logo-wrap,.logo{width:36px;height:36px}
+  .contact{grid-template-columns:1fr}
+  .brand h1{font-size:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .brand h1 span{display:none}
+  .stats{display:none}
+  #btn-new{padding:7px 12px;flex:none}
+  #btn-new kbd{display:none}
+  .toolbar{gap:8px;padding-block:0 8px}
+  .search{flex:1 1 0}
+  .search input{padding-block:8px}
+  .filter-toggle{display:inline-flex;flex:none;padding:7px 12px}
+  #seg{order:3;flex:1 1 100%;min-width:0;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  #seg::-webkit-scrollbar{display:none}
+  #seg button{flex:none;white-space:nowrap}
+  #types,select.sort{display:none;order:4}
+  .toolbar.show-filters #types{display:flex}
+  .toolbar.show-filters select.sort{display:block}
+  .row{padding-block:9px}
+  .row .meta{gap:3px}
+  .row .meta .pill.tally,.row .meta .pill.event.soon{display:none}
+}
+</style>
+
+<div class="app" id="app">
+  <header class="top">
+    <div class="brand">
+      <span class="logo-wrap"><img class="logo" id="logo" src="logo.svg" alt="" width="44" height="44"><span class="tally-lamp" id="lamp" title="Någon kund väntar på kontakt"></span></span>
+      <h1><b id="brand-name">Kundregister</b> <span>Kundregister</span></h1>
+    </div>
+    <div class="stats" id="stats"></div>
+    <button class="btn primary" id="btn-new" type="button">+ Ny kund <kbd>N</kbd></button>
+  </header>
+
+  <div class="toolbar">
+    <label class="search">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.6"/><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <input id="q" type="search" placeholder="Sök namn, företag, mail…  ( / )" autocomplete="off" aria-label="Sök kund">
+    </label>
+    <button class="btn filter-toggle" id="btn-filter" type="button" aria-expanded="false" aria-controls="types">Filter</button>
+    <div class="seg" id="seg" role="group" aria-label="Filter"></div>
+    <div class="seg" id="types" role="group" aria-label="Kundtyp"></div>
+    <select class="sort" id="sort" aria-label="Sortering">
+      <option value="kontakt">Längst sedan kontakt</option>
+      <option value="namn">Namn A–Ö</option>
+      <option value="nyast">Senast tillagd</option>
+    </select>
+  </div>
+  <div id="banner-slot"></div>
+
+  <main class="split">
+    <section class="list" id="list" aria-label="Kunder">
+      <div class="empty"><h3>Laddar kundregistret…</h3></div>
+    </section>
+    <aside class="detail" id="detail" aria-live="polite">
+      <div class="placeholder"><div><h3>Välj en kund</h3><p>Kontaktuppgifter, jobb, fakturor och all kommunikation visas här.</p></div></div>
+    </aside>
+  </main>
+</div>
+
+<div id="modal-root"></div>
+
+<script src="brand.js"></script>
+<script src="logic.js"></script>
+<!-- Valfritt mailtillägg från varumärkets mapp (window.CRM_MAIL); saknas filen fungerar appen utan färdiga mailtexter -->
+<script src="mail.js"></script>
+<script>
+(() => {
+// Ren logik (datum, status, filter, varumärke) ligger i logic.js och har enhetstester i tests/; färdiga mailtexter är ett valfritt tillägg (mail.js)
+const L = window.CRMLogic;
+// Varumärket (brand.js sätter window.BRAND vid publicering; saknas den används exempelföretaget i logic.js)
+// Ett trasigt varumärke får aldrig ge en tom sida: då används exempelföretaget och ett fel visas överst
+let brandError = '', mailError = '';
+try { L.setBrand(window.BRAND || null); applyBrand(L.getBrand()); }
+catch (e) { brandError = e.message; L.setBrand(null); applyBrand(L.getBrand()); }
+// Mailtillägget (färdiga mailtexter) används bara om det är komplett; annars loggas erbjudanden och uppföljningar utan text
+const MAIL = (() => {
+  if (!window.CRM_MAIL) return null;
+  const errors = L.checkMailModule(window.CRM_MAIL);
+  if (errors.length) { mailError = errors.join('; '); return null; }
+  return window.CRM_MAIL;
+})();
+const {KINDS, LIMIT, INV_STATUS, esc, todayISO, fmtDate, safeUrl, hostOf,
+  lastTouch, status, needsContact, latestMail, daysLabel,
+  upcomingEvents, openEvents, hasEvent, hiddenEvents, isNewEvent,
+  daysUntil, nextEvent, eventSoon, eventsToFollowUp, eventConflicts,
+  eventBadge, SERVICE_TYPES, customerTypes, legacyType,
+  BOOKING_KINDS, upcomingBookings, nextBooking, hasBooking} = L;
+
+let db = null, col = null, readOnly = false, loaded = false;
+let busy = [], busyLoaded = false;
+let customers = [];
+let sel = null, lastRaw = null;
+const openComms = new Set();
+document.addEventListener('toggle', e => {
+  const d = e.target;
+  if (d.tagName === 'DETAILS' && d.dataset.cid) { if (d.open) openComms.add(d.dataset.cid); else openComms.delete(d.dataset.cid); }
+  if (d.tagName === 'DETAILS' && d.dataset.hid) { if (d.open) openHidden.add(d.dataset.hid); else openHidden.delete(d.dataset.hid); }
+}, true);
+const openHidden = new Set();
+const view = {seg:'alla', type:'alla', q:'', sort:'kontakt'};
+try { const s = JSON.parse(localStorage.getItem('falke-view') || 'null'); if (s) Object.assign(view, {seg:s.seg||'alla', type:s.type||'alla', sort:s.sort||'kontakt'}); } catch {}
+const saveView = () => { try { localStorage.setItem('falke-view', JSON.stringify({seg:view.seg,type:view.type,sort:view.sort})); } catch {} };
+
+const $ = id => document.getElementById(id);
+// På telefon scrollar hela sidan; listans läge sparas så att "← Alla kunder" kommer tillbaka till samma ställe
+const isPhone = () => window.matchMedia('(max-width: 860px)').matches;
+let listScroll = 0;
+const rid = () => Math.random().toString(36).slice(2,10);
+
+/* ---------- Erbjudande- och uppföljningsmail per event (texten kommer från mailtillägget, mail.js) ---------- */
+let offerCtx = null;
+// mode 'offer' = erbjudande före eventet, 'eventfu' = uppföljning efter eventet
+function openOffer(c, e, mode = 'offer'){
+  const fu = mode === 'eventfu';
+  // Ett fel i tillägget får aldrig stoppa appen: då visas felet och händelsen kan loggas utan text i stället
+  let o;
+  try { o = L.normalizeMailText(fu ? MAIL.buildEventFollowUp(c, e) : MAIL.buildOffer(c, e)); }
+  catch (err) { toast('Mailtillägget gav ett fel: ' + err.message); return logOnly(c, e, mode); }
+  offerCtx = {cid:c.id, eid:e.id, note:o.note, kind:mode};
+  openModal(`<form id="offer-form"><h3>${fu ? 'Uppföljning efter' : 'Erbjudande inför'} ${esc(e.title)}</h3>
+    ${o.tags.length ? `<div class="offer-tags">${o.tags.map((t,i) => `<span class="offer-tag ${i === 0 ? 'first' : ''}">${esc(t)}</span>`).join('')}</div>` : ''}
+    <div class="form">
+      <label class="full"><span class="label">Till</span><input id="offer-to" type="email" value="${esc(c.email)}" placeholder="Ingen e-post sparad"></label>
+      <label class="full"><span class="label">Ämne</span><input id="offer-subj" type="text" value="${esc(o.subject)}"></label>
+      <label class="full"><span class="label">Text</span><textarea id="offer-body" rows="16">${esc(o.body)}</textarea></label>
+    </div>
+    <p class="mini muted offer-hint">${o.hint ? esc(o.hint) + ' ' : ''}Ändra fritt innan du skickar. Knappen öppnar ditt mailprogram om webbläsaren tillåter det, annars kopierar du texten.</p>
+    <p class="err"></p>
+    <div class="foot offer-foot">
+      <button type="button" class="btn small" data-action="offer-copy">Kopiera text</button>
+      <a class="btn small" id="offer-mailto" href="#">Öppna i mailprogram</a>
+      <button type="button" class="btn small" data-action="offer-draft">Spara som utkast</button>
+      <button type="submit" class="btn small primary">Jag har skickat det</button>
+    </div>
+  </form>`, async form => {
+    const v = id => form.querySelector('#'+id).value;
+    const cur = customers.find(x => x.id === offerCtx.cid);
+    if (!cur) throw new Error('Kunden finns inte längre i registret.');
+    const m = {id:rid(), kind:'mail_ut', date:todayISO(), subject:v('offer-subj').trim(), note:offerCtx.note, body:v('offer-body')};
+    await saveSent(cur, offerCtx.eid, offerCtx.kind === 'eventfu' ? 'eventfu' : 'offer', m);
+  });
+  $('modal-root').querySelector('.modal').classList.add('wide');
+  const upd = () => { $('offer-mailto').href = 'mailto:' + $('offer-to').value.trim() + '?subject=' + encodeURIComponent($('offer-subj').value) + '&body=' + encodeURIComponent($('offer-body').value); };
+  ['offer-to','offer-subj','offer-body'].forEach(id => $(id).addEventListener('input', upd));
+  upd();
+}
+
+// Fel som redan är skrivna för användaren och ska visas som de är (inte bytas mot det allmänna databasfelet)
+class UserError extends Error {}
+// Sparar ett mail som skickat (färdigt eller bara loggat): kontaktloggen, eventets markering och senaste kontakt.
+// Kastar vid fel, så att dialogen stannar öppen och visar felet.
+async function saveSent(cur, eventId, kind, m){
+  try { await col.doc(cur.id).update({...L.sentPatch(cur, eventId, kind, m), updatedAt: new Date().toISOString()}); }
+  catch (err) { throw new UserError(errMsg(err)); }
+  toast('Loggat som skickat');
+}
+
+// Utan mailtillägg: logga att ett erbjudande eller en uppföljning skickats (kontaktlogg + markering på eventet)
+function logOnly(c, e, kind){
+  const entry = L.logOnlyEntry(e, kind);
+  confirmModal(`${entry.subject}: logga som skickat?`, 'Logga', async () => {
+    // Kunden hämtas på nytt, så att ändringar som kommit under tiden (t.ex. från en agent) inte skrivs över
+    const cur = customers.find(x => x.id === c.id);
+    if (!cur) throw new UserError('Kunden finns inte längre i registret.');
+    await saveSent(cur, e.id, kind, {id: rid(), kind: 'mail_ut', date: todayISO(), subject: entry.subject, note: entry.note});
+  });
+}
+/* ---------- Rendering ---------- */
+const filtered = () => L.filterCustomers(customers, view);
+
+function renderStats(){
+  const over = customers.filter(needsContact).length;
+  const pot = customers.filter(c => c.status === 'potentiell').length;
+  $('lamp').classList.toggle('on', over > 0);
+  // Event ligger under respektive kund och markeras i kundlistan, inte i navigeringen
+  $('stats').innerHTML = `
+    <button type="button" class="stat ${over?'alert':''}" data-seg="kontakta"><b>${over}</b> att kontakta</button>
+    <button type="button" class="stat" data-seg="kunder"><b>${customers.length - pot}</b> kunder</button>
+    <button type="button" class="stat" data-seg="potentiella"><b>${pot}</b> potentiella</button>`;
+}
+
+function renderToolbar(){
+  const cnt = {alla:customers.length, kontakta:customers.filter(needsContact).length,
+    kunder:customers.filter(c=>c.status!=='potentiell').length, potentiella:customers.filter(c=>c.status==='potentiell').length,
+    bokat:customers.filter(hasBooking).length};
+  const segs = [['alla','Alla'],['kontakta','Att kontakta'],['bokat','Bokat'],['kunder','Kunder'],['potentiella','Potentiella']];
+  // Ett gammalt sparat filter (t.ex. det borttagna "event") visas som "Alla"
+  if (!segs.some(([k]) => k === view.seg)) { view.seg = 'alla'; saveView(); }
+  $('seg').innerHTML = segs.map(([k,l]) => `<button type="button" data-seg="${k}" aria-pressed="${view.seg===k}">${l}<span class="n">${cnt[k]}</span></button>`).join('');
+  if (view.type !== 'alla' && !SERVICE_TYPES[view.type]) view.type = 'alla';
+  $('types').innerHTML = [['alla','Alla typer'], ...Object.entries(SERVICE_TYPES)].map(([k,l]) => `<button type="button" data-type="${esc(k)}" aria-pressed="${view.type===k}">${esc(l)}</button>`).join('');
+  $('sort').value = view.sort;
+  // Prick på Filter-knappen (telefon) när kundtyp eller sortering inte är standard
+  $('btn-filter').classList.toggle('active', view.type !== 'alla' || view.sort !== 'kontakt');
+  const ex = customers.filter(c => c.example).length;
+  $('banner-slot').innerHTML = (brandError ? `<div class="banner brand-error" role="alert"><strong>Varumärket kunde inte läsas</strong> – exempelföretaget visas i stället. ${esc(brandError)}</div>` : '') + (mailError ? `<div class="banner brand-error" role="alert"><strong>Mailtillägget kunde inte läsas</strong> – erbjudanden och uppföljningar loggas utan färdig text. ${esc(mailError)}</div>` : '') + (ex && !readOnly ? `<div class="banner">Registret visar ${ex} exempelkunder så att du ser hur det fungerar. <button type="button" class="btn small" data-action="clear-examples">Ta bort exemplen</button></div>` : '');
+}
+
+function rowHTML(c){
+  const st = status(c), lm = latestMail(c);
+  const title = c.company || c.name || 'Namnlös';
+  const sub = c.company && c.name ? c.name : (c.email || '');
+  const ev = nextEvent(c), badge = eventBadge(c), nb = nextBooking(c), efu = eventsToFollowUp(c);
+  const evMore = upcomingEvents(c).length - 1;
+  const evOpen = ev && !ev.offeredAt && c.status !== 'potentiell';
+  return `<button type="button" class="row ${st.level}" data-id="${esc(c.id)}" aria-current="${sel===c.id}">
+    <span class="stripe"></span>
+    <span class="who"><span class="name">${esc(title)}</span><span class="sub">${esc(sub)}</span></span>
+    <span class="meta">
+      ${typeIcons(c)}
+      ${badge ? (badge.kind === 'offer'
+        ? `<span class="pill event offer" data-goto="events" title="Visa eventen att hantera">★ Att erbjuda${badge.count > 1 ? ' ' + badge.count : ''}</span>`
+        : '<span class="pill event soon">★ Snart</span>') : ''}
+      ${efu.length ? '<span class="pill followev">Följ upp event</span>' : ''}
+      ${st.level==='over' ? '<span class="pill tally">Kontakta</span>' : ''}
+      <span class="days">${daysLabel(st)}</span>
+      ${c.status==='potentiell' ? (c.draft ? '<span class="pill suggest">Utkast klart</span>' : '<span class="pill">Potentiell</span>') : ''}
+    </span>
+    ${lm ? `<span class="lastmail">✉ ${fmtDate(lm.date)} · ${esc(lm.subject || KINDS[lm.kind])}</span>` : ''}
+    ${ev ? `<span class="evline${evOpen ? ' open' : ''}"${evOpen ? ' data-goto="events" title="Visa eventet att hantera"' : ''}>★ ${evOpen ? '<b class="evbang" title="Inget erbjudande skickat">!</b> ' : ''}${fmtDate(ev.date)} · ${esc(ev.title)} · ${whenLabel(ev)}${evMore > 0 ? ` <span class="muted">+${evMore}</span>` : ''}</span>` : ''}
+    ${nb ? `<span class="bkline">${calIcon} ${fmtDate(nb.date)}${nb.time ? ' ' + esc(nb.time) : ''} · ${esc(BOOKING_KINDS[nb.kind] || 'Möte')}${nb.title ? ': ' + esc(nb.title) : ''}</span>` : ''}
+  </button>`;
+}
+
+/* ---------- Varumärke: namn, logga, typsnitt och färger ---------- */
+// Funktionsdeklarationer (inte const) så att de kan anropas överst, innan resten av skriptet har körts
+function applyBrand(b){
+  const name = b.company.name;
+  document.title = name + ' – Kundregister';
+  document.getElementById('brand-name').textContent = name;
+  if (b.logo) document.getElementById('logo').src = b.logo;
+  const fonts = L.brandFonts(b.fonts || {});
+  loadGoogleFonts(fonts);
+  const style = document.createElement('style');
+  style.id = 'brand-style';
+  style.textContent = brandCss(b, fonts);
+  // Sist i dokumentet, så att varumärket vinner över reservvärdena i sidans egen stilmall
+  document.body.appendChild(style);
+}
+function loadGoogleFonts(fonts){
+  const href = L.googleFontsUrl(fonts);
+  if (!href) return;
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = href;
+  document.head.appendChild(link);
+}
+// CSS-variabler för ljust och mörkt läge, typsnitt och kundtypernas färger
+function brandCss(b, fonts){
+  const stack = 'ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif';
+  const fam = f => f ? `"${f}",${stack}` : stack;
+  const c = L.deriveColors(b.colors);
+  if (c.warnings.length) console.warn('Varumärkets färger:', c.warnings.join(' · '));
+  const vars = p => Object.entries(p).map(([k, v]) => `--${k}:${String(v).replace(/[;{}<>]/g, '')}`).join(';');
+  const tc = Object.entries(L.typeColors()).filter(([id]) => /^[a-z0-9_-]+$/i.test(id));
+  const typeVars = mode => tc.map(([id, v]) => `--t-${id}:${v[mode]}`).join(';');
+  return `:root{${vars(c.light)};${typeVars('light')};--f-display:${fam(fonts.display)};--f-body:${fam(fonts.body)};--f-mono:${fam(fonts.display)}}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){${vars(c.dark)};${typeVars('dark')}}}
+:root[data-theme="dark"]{${vars(c.dark)};${typeVars('dark')}}
+${tc.map(([id]) => `.t-${id}{--tc:var(--t-${id})} .tpick:has(input[value="${id}"]){--tc:var(--t-${id})}`).join('\n')}`;
+}
+/* ---------- Kundtyper som ikoner; varumärket väljer ikon ur samlingen nedan eller anger en egen SVG ---------- */
+const TYPE_ICONS = {
+  person: '<path d="M8 8.2a2.7 2.7 0 1 0 0-5.4 2.7 2.7 0 0 0 0 5.4Z" stroke="currentColor" stroke-width="1.5"/><path d="M2.8 14c.6-2.6 2.7-4.1 5.2-4.1s4.6 1.5 5.2 4.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
+  kamera: '<rect x="1.5" y="4.5" width="13" height="9" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 4.5 6.6 2.8h2.8l1.1 1.7" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="8" cy="9" r="2.4" stroke="currentColor" stroke-width="1.5"/>',
+  film: '<rect x="1.5" y="4" width="9.5" height="8" rx="1.8" stroke="currentColor" stroke-width="1.5"/><path d="m11 7 3.5-2v6L11 9" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>',
+  sandning: '<circle cx="8" cy="8" r="1.8" fill="currentColor"/><path d="M5 5a4.2 4.2 0 0 0 0 6M11 5a4.2 4.2 0 0 1 0 6M2.9 2.9a7.2 7.2 0 0 0 0 10.2M13.1 2.9a7.2 7.2 0 0 1 0 10.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
+  pokal: '<path d="M4.5 2.5h7v3a3.5 3.5 0 0 1-7 0v-3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4.5 3.5H2.5v1a2 2 0 0 0 2 2M11.5 3.5h2v1a2 2 0 0 1-2 2M8 9v2.5M5.5 13.5h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
+  pratbubbla: '<path d="M2.5 3.5h11v7h-6l-3 2.5v-2.5h-2v-7Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>',
+  portfolj: '<rect x="1.5" y="4.5" width="13" height="9" rx="1.8" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 4.5v-2h5v2M1.5 8.5h13" stroke="currentColor" stroke-width="1.5"/>',
+  stjarna: '<path d="m8 1.8 1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6L8 1.8Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>',
+  kalender: '<rect x="1.5" y="3" width="13" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M1.5 6.5h13M5 1.5v3M11 1.5v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
+  prick: '<circle cx="8" cy="8" r="4" fill="currentColor"/>'
+};
+// Ikonen för en kundtyp: varumärkets egen SVG (betrodd, från brand.json), annars ikonen ur samlingen, annars en prick
+const iconFor = k => { const d = L.getBrand().customerTypes.find(t => t.id === k) || {}; return d.svg || TYPE_ICONS[d.icon] || TYPE_ICONS.prick; };
+const typeIcon = k => `<span class="ticon t-${esc(k)}" title="${esc(SERVICE_TYPES[k])}"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" aria-hidden="true">${iconFor(k)}</svg><span class="sr">${esc(SERVICE_TYPES[k])}</span></span>`;
+const typeIcons = c => { const t = customerTypes(c); return t.length ? `<span class="ticons">${t.map(typeIcon).join('')}</span>` : ''; };
+const typeChips = c => customerTypes(c).map(k => `<span class="tchip t-${esc(k)}">${typeIcon(k)}${esc(SERVICE_TYPES[k])}</span>`).join('');
+
+const calIcon = '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" fill="none"><rect x="1" y="2" width="10" height="9" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M1 5h10M4 1v2M8 1v2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>';
+
+/* ---------- Bokningar och uppföljning (synkas till Google-kalendern av molnagenten) ---------- */
+function bookingsHTML(c, ro){
+  const today = todayISO();
+  const up = upcomingBookings(c);
+  const past = (c.bookings||[]).filter(b => b.date && b.date < today).sort((a,b) => (b.date+(b.time||'')).localeCompare(a.date+(a.time||'')));
+  const item = b => `<li>
+      <div class="bkdate mono">${fmtDate(b.date)}${b.time ? `<br><span>${esc(b.time)}</span>` : '<br><span class="muted">heldag</span>'}</div>
+      <div class="bkbody">
+        <div class="bktitle"><span class="bkkind">${esc(BOOKING_KINDS[b.kind] || 'Möte')}</span>${b.title ? ' ' + esc(b.title) : ''}</div>
+        ${b.location ? `<div class="mini muted">${esc(b.location)}</div>` : ''}
+        <div class="mini muted">${b.source === 'gcal' ? 'Från Google Kalender' : (b.gcalEventId ? '✓ I kalendern' : 'Läggs i kalendern vid nästa synk')}</div>
+      </div>
+      <button type="button" class="icon-btn" data-action="del-booking" data-bid="${esc(b.id)}" title="Ta bort" aria-label="Ta bort bokning" ${ro}>${xIcon}</button>
+    </li>`;
+  const fu = c.followUp && c.followUp.date ? c.followUp : null;
+  return `<section class="bookings">
+    <div class="events-head"><h3>${calIcon} Bokningar <span class="mono mini">${up.length}</span></h3><span class="mini muted">Synkas med Google Kalender</span></div>
+    ${up.length ? `<ul class="bklist">${up.map(item).join('')}</ul>` : '<p class="muted mini">Inget bokat framåt.</p>'}
+    ${past.length ? `<details class="evhidden"><summary>Tidigare bokningar (${past.length})</summary><ul class="bklist">${past.map(item).join('')}</ul></details>` : ''}
+    <form class="quick bkform" id="bk-form" ${ro}>
+      <select id="bk-kind" aria-label="Typ">${Object.entries(BOOKING_KINDS).map(([k,l]) => `<option value="${k}">${l}</option>`).join('')}</select>
+      <input id="bk-date" type="date" aria-label="Datum" required>
+      <input id="bk-time" type="time" aria-label="Tid (tomt = heldag)">
+      <input id="bk-title" class="full" type="text" placeholder="Vad? t.ex. Porträtt ledningsgruppen, Kaffe med Anna" aria-label="Rubrik">
+      <input id="bk-loc" class="full" type="text" placeholder="Plats (valfritt)" aria-label="Plats">
+      <div class="foot"><button type="submit" class="btn primary small">Boka</button></div>
+    </form>
+    <form class="fu-row" id="fu-form" ${ro}>
+      <span class="label">Påminn mig att följa upp</span>
+      <input id="fu-date" type="date" value="${esc(fu ? fu.date : '')}" aria-label="Uppföljningsdatum">
+      <input id="fu-note" type="text" value="${esc(fu ? fu.note : '')}" placeholder="Anteckning, t.ex. skicka uppföljningen" aria-label="Anteckning om uppföljning">
+      <button type="submit" class="btn small">Spara</button>
+      ${fu ? '<button type="button" class="btn small ghost" data-action="fu-clear">Ta bort</button>' : ''}
+    </form>
+  </section>`;
+}
+
+// "idag", "pågår", "imorgon" eller "om 12 d"
+function whenLabel(e){
+  const d = daysUntil(e.date);
+  if (d < 0) return 'pågår';
+  if (d === 0) return 'idag';
+  if (d === 1) return 'imorgon';
+  return `om ${d} d`;
+}
+
+// Det du redan har bokat under eventets dag(ar): bokningar i registret och händelser i Google Kalender (via kalenderagenten)
+function conflictsHTML(e){
+  const k = eventConflicts(e, customers, busy);
+  if (k.length) return `<div class="evconf"><strong>⚠ Krockar med:</strong> ${k.map(x => `${esc(x.time ? (e.endDate && e.endDate !== e.date ? fmtDate(x.date) + ' ' : '') + x.time : (e.endDate && e.endDate !== e.date ? fmtDate(x.date) : 'heldag'))} ${esc(x.title)}${x.source === 'kalender' ? ' <span class="muted">(Google Kalender)</span>' : ''}`).join(' · ')}</div>`;
+  return busyLoaded ? '<div class="evfree mini">✓ Inget annat bokat den dagen</div>' : '<div class="mini muted">Kalendern synkas – krockar visas efter nästa synk</div>';
+}
+
+function eventsHTML(c, ro){
+  const evs = upcomingEvents(c), hid = hiddenEvents(c), done = eventsToFollowUp(c);
+  const checked = c.eventsCheckedAt ? `Agenten kollade senast ${fmtDate(String(c.eventsCheckedAt).slice(0,10))}` : 'Agenten har inte kollat den här kunden ännu';
+  return `<section class="events">
+    <div class="events-head"><h3>★ Kommande event <span class="mono mini">${evs.length}</span></h3><span class="mini muted">${checked}</span></div>
+    ${evs.length ? `<ul class="evlist">${evs.map(e => { const u = safeUrl(e.url); return `
+      <li class="${e.offeredAt ? 'offered' : 'open'}" data-eid="${esc(e.id)}">
+        <div class="evdate mono">${fmtDate(e.date)}${e.endDate && e.endDate !== e.date ? `<br><span class="muted">– ${fmtDate(e.endDate)}</span>` : ''}</div>
+        <div class="evbody">
+          <div class="evtitle">${esc(e.title)}${isNewEvent(e) ? ' <span class="pill event">Ny</span>' : ''}</div>
+          ${e.location ? `<div class="mini muted">${esc(e.location)}</div>` : ''}
+          ${e.why ? `<div class="evwhy">${esc(e.why)}</div>` : ''}
+          <div class="evsrc mini">${u ? `<span class="muted">Hittat på</span> <a href="${esc(u)}" target="_blank" rel="noopener" title="${esc(u)}">${esc(e.sourceLabel || hostOf(u))} ↗</a>` : '<span class="muted">Ingen källa angiven</span>'}${e.source === 'manuell' ? ' <span class="muted">· tillagd manuellt</span>' : ''}${e.foundAt ? ` <span class="muted">· ${fmtDate(String(e.foundAt).slice(0,10))}</span>` : ''}</div>
+          ${e.offeredAt ? `<div class="ev-offered">✓ Erbjudande skickat ${fmtDate(e.offeredAt)}</div>` : (c.status !== 'potentiell' ? '<div class="ev-open mini">! Inget erbjudande skickat</div>' : '')}
+          ${conflictsHTML(e)}
+        </div>
+        <div class="evact" ${ro}>
+          ${e.offeredAt ? '' : `<button type="button" class="btn small offer" data-action="ev-offer" data-eid="${esc(e.id)}" title="${MAIL ? 'Skriv ett mail med lämpliga tjänster för eventet' : 'Logga att du har erbjudit dina tjänster inför eventet'}">${MAIL ? '✉ Erbjud tjänster' : 'Logga erbjudande skickat'}</button>`}
+          <button type="button" class="btn small ghost" data-action="ev-dismiss" data-eid="${esc(e.id)}" title="Dölj eventet">Dölj</button>
+        </div>
+      </li>`; }).join('')}</ul>` : '<p class="muted mini">Inga kommande event hittade.</p>'}
+    ${done.length ? `<div class="evdone">
+      <div class="label">Avslutade event att följa upp</div>
+      <ul class="evlist">${done.map(e => `
+        <li>
+          <div class="evdate mono">${fmtDate(e.endDate || e.date)}</div>
+          <div class="evbody"><div class="evtitle">${esc(e.title)}</div><div class="mini muted">Skicka ett mail och hör hur det gick</div></div>
+          <div class="evact" ${ro}>
+            <button type="button" class="btn small offer" data-action="ev-followup" data-eid="${esc(e.id)}">${MAIL ? '✉ Skriv uppföljning' : 'Logga uppföljning skickad'}</button>
+            <button type="button" class="btn small ghost" data-action="ev-dismiss" data-eid="${esc(e.id)}" title="Hoppa över uppföljningen">Hoppa över</button>
+          </div>
+        </li>`).join('')}</ul>
+    </div>` : ''}
+    ${hid.length ? `<details class="evhidden" data-hid="${esc(c.id)}" ${openHidden.has(c.id) ? 'open' : ''}>
+      <summary>Dolda event (${hid.length})</summary>
+      <ul class="evlist">${hid.map(e => { const u = safeUrl(e.url); return `
+        <li class="hidden-ev">
+          <div class="evdate mono">${fmtDate(e.date)}${e.endDate && e.endDate !== e.date ? `<br><span class="muted">– ${fmtDate(e.endDate)}</span>` : ''}</div>
+          <div class="evbody">
+            <div class="evtitle">${esc(e.title)}</div>
+            ${e.location ? `<div class="mini muted">${esc(e.location)}</div>` : ''}
+            ${u ? `<div class="evsrc mini"><a href="${esc(u)}" target="_blank" rel="noopener">${esc(e.sourceLabel || hostOf(u))} ↗</a></div>` : ''}
+          </div>
+          <div class="evact" ${ro}><button type="button" class="btn small" data-action="ev-restore" data-eid="${esc(e.id)}">Visa igen</button></div>
+        </li>`; }).join('')}</ul>
+    </details>` : ''}
+    <form class="quick evform" id="ev-form" ${ro}>
+      <input id="ev-title" class="full" type="text" placeholder="Lägg till event, t.ex. Höstseminarium" aria-label="Event" required>
+      <input id="ev-date" type="date" aria-label="Datum" required>
+      <input id="ev-url" type="url" placeholder="Länk (valfritt)" aria-label="Länk">
+      <div class="foot"><button type="submit" class="btn small">Lägg till event</button></div>
+    </form>
+  </section>`;
+}
+
+function renderList(){
+  const list = $('list');
+  if (!db) { list.innerHTML = `<div class="empty"><h3>Kundregistret är inte tillgängligt här</h3><p>Öppna sidan inloggad på claude.ai för att se och spara kunder.</p></div>`; return; }
+  if (!loaded) return;
+  if (!customers.length) { list.innerHTML = `<div class="empty"><h3>Inga kunder ännu</h3><p>Lägg till din första kund eller en potentiell kund med <b>+ Ny kund</b>.</p></div>`; return; }
+  const items = filtered();
+  list.innerHTML = items.length ? items.map(rowHTML).join('') : `<div class="empty"><h3>Inga träffar</h3><p>Ändra sökning eller filter.</p></div>`;
+}
+
+function renderDetail(force){
+  const el = $('detail');
+  const c = customers.find(x => x.id === sel);
+  document.getElementById('app').classList.toggle('has-sel', !!c);
+  if (!c) { lastRaw = null; el.innerHTML = `<div class="placeholder"><div><h3>Välj en kund</h3><p>Kontaktuppgifter, jobb, fakturor och all kommunikation visas här.</p></div></div>`; return; }
+  if (!force && c._raw === lastRaw) return;
+  lastRaw = c._raw;
+  const st = status(c), lm = latestMail(c);
+  const comms = [...(c.comms||[])].sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  const jobs = [...(c.jobs||[])].sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  const web = safeUrl(c.website);
+  const ro = readOnly ? 'hidden' : '';
+
+  let alert = '';
+  if (st.level === 'over') alert = `<div class="alert-bar"><span class="big">${st.days} d</span><span><strong>Ingen kontakt sedan ${fmtDate(st.d)}.</strong> Dags att höra av sig.</span><button type="button" class="btn small" data-action="focus-log" ${ro}>Logga kontakt</button></div>`;
+  else if (st.level === 'never') alert = `<div class="alert-bar amber"><span><strong>Ingen kontakt loggad ännu.</strong> ${c.status==='potentiell' ? 'Hör av dig och logga första kontakten.' : ''}</span><button type="button" class="btn small" data-action="focus-log" ${ro}>Logga kontakt</button></div>`;
+  else if (st.level === 'warn') alert = `<div class="alert-bar amber"><span class="big">${st.days} d</span><span>sedan senaste kontakt. Markeras rött vid ${LIMIT} dagar.</span></div>`;
+
+  el.innerHTML = `
+  <button type="button" class="btn ghost back" data-action="back">← Alla kunder</button>
+  <div class="d-head">
+    <div style="min-width:0">
+      <div class="d-tags">
+        ${typeChips(c)}
+        ${c.status==='potentiell' ? '<span class="pill">Potentiell kund</span>' : ''}
+        <span class="days ${st.level}">${st.level==='never' ? 'Ej kontaktad' : 'Senast kontakt ' + fmtDate(st.d)}</span>
+      </div>
+      <h2>${esc(c.company || c.name || 'Namnlös')}</h2>
+      ${c.company && c.name ? `<div class="person">${esc(c.name)}${c.role ? ' · ' + esc(c.role) : ''}</div>` : ''}
+    </div>
+    <div class="d-actions" ${ro}>
+      ${c.status==='potentiell' ? '<button type="button" class="btn" data-action="convert">Gör till kund</button>' : ''}
+      <button type="button" class="btn" data-action="edit">Redigera</button>
+      <button type="button" class="btn ghost danger" data-action="delete">Ta bort</button>
+    </div>
+  </div>
+  ${alert}
+  <div class="contact">
+    <div><div class="label">E-post</div><div class="val">${c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>${copyBtn(c.email)}` : '<span class="muted">–</span>'}</div></div>
+    <div><div class="label">Telefon</div><div class="val">${c.phone ? `<span class="mono">${esc(c.phone)}</span>${copyBtn(c.phone)}` : '<span class="muted">–</span>'}</div></div>
+    <div><div class="label">Webb / Ort</div><div class="val">${web ? `<a href="${esc(web)}" target="_blank" rel="noopener">${esc(c.website)}</a>` : ''}${c.city ? `<span class="muted">${web?' · ':''}${esc(c.city)}</span>` : ''}${!web && !c.city ? '<span class="muted">–</span>' : ''}</div></div>
+    <div><div class="label">Senaste mail</div><div class="val">${lm ? `<span>${fmtDate(lm.date)} · ${esc(lm.subject || KINDS[lm.kind])}</span>` : '<span class="muted">Inget mail loggat</span>'}</div></div>
+  </div>
+
+  ${c.source === 'agent' && (c.why || c.contactSource) ? `<div class="why">
+    <div class="label">Varför de passar</div>
+    ${c.why ? `<p>${esc(c.why)}</p>` : ''}
+    <p class="mini muted">${c.contactSource && safeUrl(c.contactSource) ? `Kontaktuppgift hittad på <a href="${esc(safeUrl(c.contactSource))}" target="_blank" rel="noopener">${esc(c.contactSource)}</a>` : ''}${c.emailConfidence === 'gissad' ? ' · <strong class="warn-t">E-postadressen är gissad utifrån företagets adressmönster – dubbelkolla innan du skickar</strong>' : ''}</p>
+  </div>` : ''}
+
+  ${c.draft && (c.draft.subject || c.draft.body) ? `<section class="draft">
+    <div class="draft-head"><h3>Utkast till mail</h3><span class="mini muted">Inte skickat</span></div>
+    <div class="label">Till</div><div class="mono mini">${esc(c.email || '–')}</div>
+    <div class="label">Ämne</div><div class="d-subj" id="draft-subj">${esc(c.draft.subject)}</div>
+    <div class="label">Text</div><div class="d-body" id="draft-body">${esc(c.draft.body)}</div>
+    <div class="draft-actions">
+      <button type="button" class="btn small" data-copytarget="draft-subj">Kopiera ämne</button>
+      <button type="button" class="btn small" data-copytarget="draft-body">Kopiera text</button>
+      ${c.email ? `<a class="btn small" href="mailto:${esc(c.email)}?subject=${encodeURIComponent(c.draft.subject||'')}&amp;body=${encodeURIComponent(c.draft.body||'')}">Öppna i mailprogram</a>` : ''}
+      <span class="spacer"></span>
+      <button type="button" class="btn small ghost" data-action="draft-discard" ${ro}>Släng utkast</button>
+      <button type="button" class="btn small primary" data-action="draft-sent" ${ro}>Jag har skickat det</button>
+    </div>
+  </section>` : ''}
+
+  ${bookingsHTML(c, ro)}
+
+  ${c.status === 'potentiell' ? '' : eventsHTML(c, ro)}
+
+  <div class="cols">
+    <section class="section">
+      <h3>Kommunikation <span class="mono mini">${comms.length}</span></h3>
+      <form class="quick" id="log-form" ${ro}>
+        <select id="log-kind" aria-label="Typ av kontakt">${Object.entries(KINDS).map(([k,l]) => `<option value="${k}">${l}</option>`).join('')}</select>
+        <input id="log-date" type="date" value="${todayISO()}" max="${todayISO()}" aria-label="Datum" required>
+        <input id="log-subj" class="subj-in" type="text" placeholder="Ämne, t.ex. Offert foto" aria-label="Ämne">
+        <textarea id="log-note" rows="2" placeholder="Anteckning (valfritt)" aria-label="Anteckning"></textarea>
+        <div class="foot"><button type="submit" class="btn primary small">Logga</button></div>
+      </form>
+      ${comms.length ? `<ul class="timeline">${comms.map(m => `
+        <li class="${lm && m.id===lm.id ? 'latest-mail' : ''}">
+          <div class="when">${fmtDate(m.date)}</div>
+          <div class="body">${m.body ? `
+            <details data-cid="${esc(m.id)}" ${openComms.has(m.id) ? 'open' : ''}>
+              <summary>
+                <div class="kind ${esc(m.kind)}">${esc(KINDS[m.kind]||'Övrigt')}${lm && m.id===lm.id ? '<span class="flag">· senaste mail</span>' : ''}</div>
+                ${m.subject ? `<div class="subj">${esc(m.subject)}</div>` : ''}
+                ${m.note ? `<div class="note sum">${esc(m.note)}</div>` : ''}
+                <div class="more"></div>
+              </summary>
+              <div class="mailbody">${esc(m.body)}</div>
+            </details>` : `
+            <div class="kind ${esc(m.kind)}">${esc(KINDS[m.kind]||'Övrigt')}${lm && m.id===lm.id ? '<span class="flag">· senaste mail</span>' : ''}</div>
+            ${m.subject ? `<div class="subj">${esc(m.subject)}</div>` : ''}
+            ${m.note ? `<div class="note">${esc(m.note)}</div>` : ''}`}
+          </div>
+          <button type="button" class="icon-btn" data-action="del-comm" data-cid="${esc(m.id)}" title="Ta bort" aria-label="Ta bort kontakt" ${ro}>${xIcon}</button>
+        </li>`).join('')}</ul>` : '<p class="muted mini">Ingen kommunikation loggad ännu.</p>'}
+    </section>
+
+    <section class="section">
+      ${c.status === 'potentiell' ? '' : `<h3>Jobb &amp; fakturor <span class="mono mini">${jobs.length}</span></h3>
+      <form class="quick" id="job-form" ${ro}>
+        <input id="job-title" class="full" type="text" placeholder="Jobb, t.ex. Porträtt ledningsgrupp" aria-label="Jobb" required>
+        <input id="job-date" type="date" value="${todayISO()}" aria-label="Datum">
+        <input id="job-amount" type="text" inputmode="numeric" placeholder="Belopp kr" aria-label="Belopp">
+        <input id="job-inv" class="full" type="url" placeholder="Länk till faktura (https://…)" aria-label="Fakturalänk">
+        <div class="foot"><button type="submit" class="btn primary small">Lägg till jobb</button></div>
+      </form>
+      ${jobs.length ? `<ul class="jobs">${jobs.map(j => { const inv = safeUrl(j.invoiceUrl); return `
+        <li>
+          <div class="title">${esc(j.title)}</div>
+          <button type="button" class="icon-btn" data-action="del-job" data-jid="${esc(j.id)}" title="Ta bort" aria-label="Ta bort jobb" ${ro}>${xIcon}</button>
+          <div class="sub">
+            <span class="mono">${fmtDate(j.date)}</span>
+            ${j.amount ? `<span class="mono">${esc(j.amount)} kr</span>` : ''}
+            ${j.invoiceNumber ? `<span class="mono">#${esc(j.invoiceNumber)}</span>` : ''}
+            ${j.invoiceStatus && INV_STATUS[j.invoiceStatus] ? `<span class="inv-st ${esc(j.invoiceStatus)}">${INV_STATUS[j.invoiceStatus]}</span>` : ''}
+            ${inv ? `<a class="inv" href="${esc(inv)}" target="_blank" rel="noopener">Faktura ↗</a>` : (j.invoiceNumber ? '' : '<span class="noinv">Ingen faktura länkad</span>')}
+          </div>
+        </li>`; }).join('')}</ul>` : '<p class="muted mini">Inga jobb registrerade.</p>'}`}
+
+      <h3 ${c.status === 'potentiell' ? '' : 'style="margin-top:28px"'}>Anteckningar</h3>
+      ${c.notes ? `<div class="notes">${esc(c.notes)}</div>` : '<p class="muted mini">Inga anteckningar. Lägg till via Redigera.</p>'}
+    </section>
+  </div>`;
+}
+
+const xIcon = '<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>';
+const copyBtn = v => `<button type="button" class="icon-btn" data-copy="${esc(v)}" title="Kopiera" aria-label="Kopiera"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" fill="none"><rect x="4.5" y="4.5" width="7.5" height="7.5" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M9.5 2.5V2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v5.5a1 1 0 0 0 1 1h.5" stroke="currentColor" stroke-width="1.4"/></svg></button>`;
+
+function renderAll(){ renderStats(); renderToolbar(); renderList(); renderDetail(); }
+
+/* ---------- Toast & modals ---------- */
+let toastT;
+function toast(msg){
+  let t = document.querySelector('.toast');
+  if (!t) { t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role','status'); document.body.appendChild(t); }
+  t.textContent = msg; t.hidden = false;
+  clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2200);
+}
+function errMsg(e){
+  if (e && e.code === 'quota_exceeded') return 'Lagringsutrymmet är fullt. Ta bort gamla kunder och försök igen.';
+  if (e && e.code === 'invalid_argument') return 'Du har inte behörighet att ändra registret.';
+  return 'Kunde inte spara. Kontrollera anslutningen och försök igen.';
+}
+function closeModal(){ $('modal-root').innerHTML = ''; }
+function openModal(html, onSubmit){
+  $('modal-root').innerHTML = `<div class="overlay" data-action="overlay"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`;
+  const form = $('modal-root').querySelector('form');
+  if (form) {
+    form.addEventListener('submit', async ev => { ev.preventDefault(); const b = form.querySelector('[type=submit]'); b.disabled = true;
+      try { await onSubmit(form); closeModal(); } catch (e) { const er = form.querySelector('.err'); if (er) er.textContent = e.message || errMsg(e); b.disabled = false; } });
+    const first = form.querySelector('input,select,textarea'); if (first) first.focus();
+  }
+}
+function confirmModal(text, okLabel, fn){
+  openModal(`<form><h3>${esc(text)}</h3><p class="err"></p><div class="foot"><button type="button" class="btn" data-action="close">Avbryt</button><button type="submit" class="btn primary">${esc(okLabel)}</button></div></form>`,
+    async () => { try { await fn(); } catch (e) { throw new Error(e instanceof UserError ? e.message : errMsg(e)); } });
+}
+
+function customerForm(c){
+  const isNew = !c; c = c || {status:'kund', types:L.getBrand().customerTypes.slice(0, 1).map(t => t.id)};
+  const ct = customerTypes(c), hint = L.senderHint();
+  openModal(`<form class="cform"><h3>${isNew ? 'Ny kund' : 'Redigera kund'}</h3>
+    <div class="form">
+      <label class="full"><span class="label">Status</span>
+        <span class="seg" style="align-self:flex-start">
+          <button type="button" data-st="kund" aria-pressed="${c.status!=='potentiell'}">Kund</button>
+          <button type="button" data-st="potentiell" aria-pressed="${c.status==='potentiell'}">Potentiell kund</button>
+        </span>
+      </label>
+      <label><span class="label">Företag / organisation</span><input id="f-company" value="${esc(c.company)}" placeholder="t.ex. Exempelbolaget AB"></label>
+      <label><span class="label">Kontaktperson</span><input id="f-name" value="${esc(c.name)}" placeholder="För- och efternamn"></label>
+      <label><span class="label">Roll</span><input id="f-role" value="${esc(c.role)}" placeholder="t.ex. Marknadschef"></label>
+      <fieldset class="full typepick"><legend class="label">Kundtyp (välj en eller flera)</legend>
+        ${Object.entries(SERVICE_TYPES).map(([k,l]) => `<label class="tpick"><input type="checkbox" name="f-types" value="${esc(k)}" ${ct.includes(k) ? 'checked' : ''}>${typeIcon(k)}<span>${esc(l)}</span></label>`).join('')}
+        ${hint ? `<span class="mini muted tphint">${esc(hint)}</span>` : ''}
+      </fieldset>
+      <label><span class="label">E-post</span><input id="f-email" type="email" value="${esc(c.email)}"></label>
+      <label><span class="label">Telefon</span><input id="f-phone" type="tel" value="${esc(c.phone)}"></label>
+      <label><span class="label">Webbplats</span><input id="f-website" value="${esc(c.website)}"></label>
+      <label><span class="label">Ort</span><input id="f-city" value="${esc(c.city)}"></label>
+      <label class="full"><span class="label">Anteckningar</span><textarea id="f-notes">${esc(c.notes)}</textarea></label>
+    </div>
+    <p class="err"></p>
+    <div class="foot"><button type="button" class="btn" data-action="close">Avbryt</button><button type="submit" class="btn primary">${isNew ? 'Lägg till' : 'Spara'}</button></div>
+  </form>`, async form => {
+    const v = id => form.querySelector('#'+id).value.trim();
+    const types = [...form.querySelectorAll('input[name="f-types"]:checked')].map(x => x.value);
+    const legacy = legacyType({types});
+    const data = {company:v('f-company'), name:v('f-name'), role:v('f-role'), types, ...(legacy ? {type: legacy} : {}), email:v('f-email'),
+      phone:v('f-phone'), website:v('f-website'), city:v('f-city'), notes:v('f-notes'),
+      status: form.querySelector('[data-st][aria-pressed="true"]').dataset.st, updatedAt:new Date().toISOString()};
+    if (!data.company && !data.name) throw new Error('Fyll i företag eller kontaktperson.');
+    try {
+      if (isNew) { const ref = col.doc(); await ref.set({...data, jobs:[], comms:[], lastContact:null, createdAt:new Date().toISOString()}); sel = ref.id; toast(data.status==='potentiell' ? 'Potentiell kund tillagd' : 'Kund tillagd'); }
+      else { await col.doc(c.id).update({...data, example:false}); toast('Sparat'); }
+    } catch (e) { throw new Error(errMsg(e)); }
+  });
+  $('modal-root').querySelectorAll('[data-st]').forEach(b => b.addEventListener('click', () => {
+    $('modal-root').querySelectorAll('[data-st]').forEach(x => x.setAttribute('aria-pressed', x === b));
+  }));
+}
+
+/* ---------- Writes ---------- */
+async function patchCustomer(c, patch, msg){
+  try { await col.doc(c.id).update({...patch, updatedAt:new Date().toISOString()}); if (msg) toast(msg); return true; }
+  catch (e) { toast(errMsg(e)); return false; }
+}
+const withLast = (c, comms, jobs) => lastTouch({comms, jobs});
+
+/* ---------- Events ---------- */
+document.addEventListener('click', async ev => {
+  const t = ev.target.closest('[data-seg],[data-type],[data-id],[data-action],[data-copy],[data-copytarget]');
+  if (!t) return;
+  if (t.dataset.copytarget) {
+    const src = $(t.dataset.copytarget);
+    try { await navigator.clipboard.writeText(src.textContent); toast('Kopierat'); }
+    catch { const s = window.getSelection(), r = document.createRange(); r.selectNodeContents(src); s.removeAllRanges(); s.addRange(r); toast('Markerat – tryck Ctrl+C'); }
+    return;
+  }
+  if (t.dataset.copy !== undefined) {
+    const v = t.dataset.copy;
+    try { await navigator.clipboard.writeText(v); toast('Kopierat'); }
+    catch { const s = window.getSelection(), r = document.createRange(); r.selectNodeContents(t.previousElementSibling); s.removeAllRanges(); s.addRange(r); toast('Markerat – tryck Ctrl+C'); }
+    return;
+  }
+  if (t.dataset.seg && !t.closest('.modal')) { view.seg = (t.classList.contains('stat') && view.seg === t.dataset.seg) ? 'alla' : t.dataset.seg; saveView(); renderToolbar(); renderList(); return; }
+  if (t.dataset.type) { view.type = t.dataset.type; saveView(); renderToolbar(); renderList(); return; }
+  if (t.dataset.id) {
+    if (isPhone()) listScroll = window.scrollY;
+    sel = t.dataset.id; renderList(); renderDetail(true); $('detail').scrollTop = 0;
+    if (isPhone()) window.scrollTo(0, 0);
+    // Klick på "Att erbjuda" eller den röda eventraden: hoppa direkt till första ohanterade eventet
+    if (ev.target.closest('[data-goto="events"]')) {
+      const li = $('detail').querySelector('.evlist li.open') || $('detail').querySelector('.events');
+      if (li) { li.scrollIntoView({block: 'center'}); li.classList.add('flash'); setTimeout(() => li.classList.remove('flash'), 1700); }
+    }
+    return;
+  }
+  const a = t.dataset.action, c = customers.find(x => x.id === sel);
+  if (a === 'overlay' && ev.target === t) return closeModal();
+  if (a === 'close') return closeModal();
+  if (a === 'back') { sel = null; renderList(); renderDetail(true); if (isPhone()) window.scrollTo(0, listScroll); return; }
+  if (a === 'clear-examples') {
+    const ex = customers.filter(x => x.example);
+    return confirmModal(`Ta bort ${ex.length} exempelkunder?`, 'Ta bort', async () => { for (const x of ex) await col.doc(x.id).delete(); if (ex.some(x => x.id === sel)) sel = null; toast('Exemplen borttagna'); });
+  }
+  if (a === 'offer-copy') {
+    const b = $('offer-body');
+    try { await navigator.clipboard.writeText(b.value); toast('Texten kopierad'); }
+    catch { b.focus(); b.select(); toast('Markerat – tryck Ctrl+C'); }
+    return;
+  }
+  if (!c) return;
+  if (a === 'edit') return customerForm(c);
+  if (a === 'convert') return patchCustomer(c, {status:'kund'}, 'Nu är ' + (c.company||c.name) + ' kund');
+  if (a === 'delete') {
+    const fromAgent = c.source === 'agent';
+    return confirmModal(fromAgent ? `Ta bort ${c.company || c.name}? Agenten föreslår inte företaget igen.` : `Ta bort ${c.company || c.name}? All historik försvinner.`, 'Ta bort kund', async () => {
+      if (fromAgent) await db.collection('skipped').doc(L.skipKey(c)).set({company: c.company || '', website: c.website || '', at: new Date().toISOString()});
+      await col.doc(c.id).delete(); sel = null; toast('Kund borttagen');
+    });
+  }
+  if (a === 'ev-followup') {
+    const e = (c.events||[]).find(x => x.id === t.dataset.eid);
+    if (e) MAIL ? openOffer(c, e, 'eventfu') : logOnly(c, e, 'eventfu');
+    return;
+  }
+  if (a === 'ev-offer') {
+    const e = (c.events||[]).find(x => x.id === t.dataset.eid);
+    if (e) MAIL ? openOffer(c, e) : logOnly(c, e, 'offer');
+    return;
+  }
+  if (a === 'offer-draft') {
+    if (!offerCtx) return;
+    const draft = {subject:$('offer-subj').value.trim(), body:$('offer-body').value, summary:offerCtx.note, eventId:offerCtx.eid, kind:offerCtx.kind};
+    if (await patchCustomer(c, {draft}, 'Sparat som utkast')) closeModal();
+    return;
+  }
+  if (a === 'ev-dismiss') {
+    const events = (c.events||[]).map(e => e.id === t.dataset.eid ? {...e, dismissed: true} : e);
+    return patchCustomer(c, {events}, 'Eventet dolt');
+  }
+  if (a === 'ev-restore') {
+    const events = (c.events||[]).map(e => e.id === t.dataset.eid ? {...e, dismissed: false} : e);
+    return patchCustomer(c, {events}, 'Eventet visas igen');
+  }
+  if (a === 'del-booking') {
+    if (t.dataset.armed) { const bookings = (c.bookings||[]).filter(b => b.id !== t.dataset.bid); patchCustomer(c, {bookings}, 'Bokningen borttagen'); }
+    else { t.dataset.armed = '1'; t.innerHTML = '<span class="mini" style="color:var(--tally)">Ta bort?</span>'; setTimeout(() => { if (t.isConnected) { delete t.dataset.armed; t.innerHTML = xIcon; } }, 3000); }
+    return;
+  }
+  if (a === 'fu-clear') return patchCustomer(c, {followUp: null}, 'Uppföljningen borttagen');
+  if (a === 'draft-discard') return patchCustomer(c, {draft: null}, 'Utkastet slängt');
+  if (a === 'draft-sent') {
+    const m = {id: rid(), kind: 'mail_ut', date: todayISO(), subject: c.draft?.subject || '', note: c.draft?.summary || 'Mail skickat från utkast', body: c.draft?.body || ''};
+    const comms = [...(c.comms||[]), m];
+    const patch = {comms, draft: null, lastContact: withLast(c, comms, c.jobs||[]), lastMail: {date: m.date, subject: m.subject}};
+    if (c.draft?.eventId) {
+      const field = c.draft.kind === 'eventfu' ? 'followUpSentAt' : 'offeredAt';
+      patch.events = (c.events||[]).map(e => e.id === c.draft.eventId ? {...e, [field]: m.date} : e);
+    }
+    return patchCustomer(c, patch, 'Loggat som skickat');
+  }
+  if (a === 'focus-log') { const s = $('log-subj'); if (s) { s.scrollIntoView({block:'center'}); s.focus(); } return; }
+  if (a === 'del-comm') {
+    if (t.dataset.armed) { const comms = (c.comms||[]).filter(m => m.id !== t.dataset.cid); patchCustomer(c, {comms, lastContact:withLast(c, comms, c.jobs||[])}, 'Borttagen'); }
+    else { t.dataset.armed = '1'; t.innerHTML = '<span class="mini danger" style="color:var(--tally)">Ta bort?</span>'; setTimeout(() => { if (t.isConnected) { delete t.dataset.armed; t.innerHTML = xIcon; } }, 3000); }
+    return;
+  }
+  if (a === 'del-job') {
+    if (t.dataset.armed) { const jobs = (c.jobs||[]).filter(j => j.id !== t.dataset.jid); patchCustomer(c, {jobs, lastContact:withLast(c, c.comms||[], jobs)}, 'Borttaget'); }
+    else { t.dataset.armed = '1'; t.innerHTML = '<span class="mini" style="color:var(--tally)">Ta bort?</span>'; setTimeout(() => { if (t.isConnected) { delete t.dataset.armed; t.innerHTML = xIcon; } }, 3000); }
+  }
+});
+
+document.addEventListener('submit', async ev => {
+  const f = ev.target, c = customers.find(x => x.id === sel);
+  if (f.id === 'log-form' && c) {
+    ev.preventDefault();
+    const m = {id:rid(), kind:$('log-kind').value, date:$('log-date').value || todayISO(), subject:$('log-subj').value.trim(), note:$('log-note').value.trim()};
+    const comms = [...(c.comms||[]), m];
+    const patch = {comms, lastContact:withLast(c, comms, c.jobs||[])};
+    if (m.kind === 'mail_ut' || m.kind === 'mail_in') patch.lastMail = {date:m.date, subject:m.subject};
+    patchCustomer(c, patch, 'Kontakt loggad');
+  }
+  if (f.id === 'bk-form' && c) {
+    ev.preventDefault();
+    const b = {id:rid(), kind:$('bk-kind').value, date:$('bk-date').value, time:$('bk-time').value, title:$('bk-title').value.trim(), location:$('bk-loc').value.trim(), source:'app', createdAt:new Date().toISOString()};
+    if (!b.date) return;
+    patchCustomer(c, {bookings:[...(c.bookings||[]), b]}, 'Bokat – läggs i kalendern vid nästa synk');
+  }
+  if (f.id === 'fu-form' && c) {
+    ev.preventDefault();
+    const date = $('fu-date').value;
+    if (!date) return toast('Välj ett datum för uppföljningen');
+    patchCustomer(c, {followUp:{date, note:$('fu-note').value.trim()}}, 'Uppföljning sparad');
+  }
+  if (f.id === 'ev-form' && c) {
+    ev.preventDefault();
+    const e = {id:rid(), title:$('ev-title').value.trim(), date:$('ev-date').value, url:$('ev-url').value.trim(), source:'manuell', dismissed:false};
+    if (!e.title || !e.date) return;
+    patchCustomer(c, {events:[...(c.events||[]), e]}, 'Event tillagt');
+  }
+  if (f.id === 'job-form' && c) {
+    ev.preventDefault();
+    const j = {id:rid(), title:$('job-title').value.trim(), date:$('job-date').value, amount:$('job-amount').value.trim(), invoiceUrl:$('job-inv').value.trim()};
+    if (!j.title) return;
+    const jobs = [...(c.jobs||[]), j];
+    patchCustomer(c, {jobs, lastJob:{title:j.title, date:j.date}, lastContact:withLast(c, c.comms||[], jobs)}, 'Jobb tillagt');
+  }
+});
+
+$('q').addEventListener('input', e => { view.q = e.target.value; renderList(); });
+$('sort').addEventListener('change', e => { view.sort = e.target.value; saveView(); renderToolbar(); renderList(); });
+$('btn-filter').addEventListener('click', () => {
+  const open = document.querySelector('.toolbar').classList.toggle('show-filters');
+  $('btn-filter').setAttribute('aria-expanded', open);
+});
+$('btn-new').addEventListener('click', () => { if (col && !readOnly) customerForm(null); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { if ($('modal-root').innerHTML) closeModal(); else if (document.activeElement === $('q')) $('q').blur(); return; }
+  const tag = (e.target.tagName||'').toLowerCase();
+  if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.ctrlKey || e.metaKey || e.altKey || $('modal-root').innerHTML) return;
+  if (e.key === '/') { e.preventDefault(); $('q').focus(); }
+  if (e.key === 'n' || e.key === 'N') { e.preventDefault(); if (col && !readOnly) customerForm(null); }
+});
+
+/* ---------- Boot ---------- */
+renderToolbar(); renderStats();
+(async () => {
+  db = await claude.use('db');
+  if (!db) { renderList(); $('btn-new').hidden = true; return; }
+  const user = await claude.use('user');
+  if (user) { const w = await user.can('data.write'); if (w === false) { readOnly = true; $('btn-new').hidden = true; } }
+  col = db.collection('customers');
+  col.onSnapshot(snap => {
+    customers = snap.docs.map(d => { const raw = d.data(); return {...raw, id:d.id, _raw:raw}; });
+    loaded = true;
+    if (sel && !customers.some(c => c.id === sel)) sel = null;
+    renderAll();
+  }, () => { $('list').innerHTML = `<div class="empty"><h3>Anslutningen bröts</h3><p>Ladda om sidan för att fortsätta.</p></div>`; });
+  // Upptagna tider från Google Kalender (skrivs av kalenderagenten) – används för att visa krockar vid kundevent
+  db.doc('sync/busy').onSnapshot(s => {
+    const d = s.exists ? s.data() : null;
+    busy = (d && Array.isArray(d.items)) ? d.items : [];
+    busyLoaded = !!d;
+    if (sel) renderDetail(true);
+  }, () => {});
+})();
+})();
+</script>

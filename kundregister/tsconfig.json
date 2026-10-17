@@ -1,0 +1,13 @@
+{
+  "//": "Kompileras med tools\\tsc.ps1 (TypeScript 6.0.3 i Edge, se tools\\typescript-6.0.3). Samma inställningar läses av VS Code.",
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM"],
+    "strict": true,
+    "noEmitOnError": true,
+    "removeComments": false,
+    "newLine": "lf",
+    "skipLibCheck": true
+  },
+  "files": ["logic.ts"]
+}

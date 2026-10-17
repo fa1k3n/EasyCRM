@@ -1,0 +1,32 @@
+# Nycklar och hemligheter ska aldrig in i git (lägg dem i miljövariabler)
+.env
+.env.*
+*.key
+*token*.txt
+*.pem
+*.pfx
+*.p12
+id_rsa*
+id_ed25519*
+
+# Exporter och säkerhetskopior av kunddata
+backup/
+*.json
+# JSON som ska med trots regeln ovan: TypeScript-inställningarna och exemplet på varumärke
+!kundregister/tsconfig.json
+!exempel/brand.json
+
+# Ditt företags varumärke (brand.json, bilder, mailtillägg) och publiceringsmappen i den: sparas aldrig i git.
+# Skapa med  Copy-Item exempel varumarke -Recurse  och säkerhetskopiera den själv.
+varumarke/
+
+# Lokal markering som visar att mappen skrivs av en export; följer aldrig med till git
+.crm-platform
+
+# Publiceringsmappar som tools\deploy.ps1 skriver (standard: <varumärkesmappen>\publicera)
+publicera/
+
+# Tillfälliga filer
+*.tmp
+Thumbs.db
+desktop.ini

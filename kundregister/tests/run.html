@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<title>Tester – Kundregister</title>
+<style>
+  body { font: 15px/1.5 system-ui, "Segoe UI", sans-serif; margin: 24px; color: #15181b; background: #fbfbfa; }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  .pass { color: #2e7a4c; } .fail { color: #d0342c; }
+  li { margin: 6px 0; } code { font: 13px Consolas, monospace; }
+</style>
+</head>
+<body>
+<h1>Enhetstester för logic.js</h1>
+<div id="summary">Kör…</div>
+<ul id="failures"></ul>
+<script src="../logic.js"></script>
+<script src="harness.js"></script>
+<script src="test-brand.js"></script>
+<script src="logic.test.js"></script>
+<script src="brand.test.js"></script>
+<script src="mail-api.test.js"></script>
+<script>
+  const r = runTests();
+  const s = document.getElementById('summary');
+  s.className = r.failed ? 'fail' : 'pass';
+  s.textContent = `${r.passed} godkända, ${r.failed} misslyckade`;
+  document.getElementById('failures').innerHTML = r.failures
+    .map(f => `<li class="fail"><b>${f.name}</b><br><code>${f.error.replace(/</g, '&lt;')}</code></li>`).join('');
+  // Rad som run-tests.ps1 läser när testerna körs i en webbläsare utan fönster
+  const out = document.createElement('pre');
+  out.id = 'result';
+  out.textContent = 'TESTRESULTAT ' + JSON.stringify(r);
+  document.body.appendChild(out);
+</script>
+</body>
+</html>
