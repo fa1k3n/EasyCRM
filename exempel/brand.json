@@ -1,5 +1,5 @@
 {
-  "//": "Exempel på varumärke. Kopiera mappen exempel/ till varumarke/ i repots rot (ignoreras av git), fyll i och prova med tools\\preview.ps1 och sätt ihop publiceringsmappen med tools\\deploy.ps1 (båda använder varumarke/ automatiskt). Fält som börjar med // är kommentarer och ignoreras.",
+  "//": "Exempel på varumärke. Kopiera mappen exempel/ till varumarke/ i repots rot (ignoreras av git), fyll i och prova med npm run preview och sätt ihop publiceringsmappen med npm run deploy (båda använder varumarke/ automatiskt). Fält som börjar med // är kommentarer och ignoreras.",
 
   "// company": "name: företagets namn (visas i rubriken och fliken). short: valfri kortform.",
   "company": {"name": "Exempelstudion AB"},

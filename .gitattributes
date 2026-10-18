@@ -1,8 +1,5 @@
 # Radslut: git sparar text med LF och checkar ut enligt reglerna nedan (samma på din dator och på GitHub)
 * text=auto
-*.ps1 text eol=crlf
 *.md text eol=crlf
 *.txt text eol=crlf
 *.png binary
-# Den nedladdade TypeScript-kompilatorn ska checkas ut byte för byte så att SHA256SUMS.txt stämmer
-tools/typescript-6.0.3/** -text

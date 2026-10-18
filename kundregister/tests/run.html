@@ -27,7 +27,7 @@
   s.textContent = `${r.passed} godkända, ${r.failed} misslyckade`;
   document.getElementById('failures').innerHTML = r.failures
     .map(f => `<li class="fail"><b>${f.name}</b><br><code>${f.error.replace(/</g, '&lt;')}</code></li>`).join('');
-  // Rad som run-tests.ps1 läser när testerna körs i en webbläsare utan fönster
+  // Resultatet som maskinläsbar rad, om sidan körs i en webbläsare utan fönster (npm test kör samma tester i jest)
   const out = document.createElement('pre');
   out.id = 'result';
   out.textContent = 'TESTRESULTAT ' + JSON.stringify(r);

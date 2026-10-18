@@ -2,7 +2,7 @@
 /* Kundregister – ren logik utan DOM och databas.
  * Används av index.html (window.CRMLogic) och av enhetstesterna i tests/.
  * Klockan går att byta ut med setClock() så att testerna får ett fast "idag".
- * Källkoden är logic.ts. logic.js byggs från den med tools\tsc.ps1 (körs av run-tests.ps1) – ändra aldrig logic.js för hand. */
+ * Källkoden är logic.ts. logic.js byggs från den med npm run build (node tools/build.js, körs av npm test) – ändra aldrig logic.js för hand. */
 (function (root, factory) {
     if (typeof module === 'object' && module.exports)
         module.exports = factory();

@@ -1,4 +1,4 @@
-/* Låtsasdatabas för lokal förhandsvisning av kundregistret (tools/preview.ps1).
+/* Låtsasdatabas för lokal förhandsvisning av kundregistret (tools/preview.js).
  * Ersätter window.claude så att appen kan visas utan claude.ai. Alla kunder är påhittade exempel. */
 (function () {
   const iso = n => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10); };

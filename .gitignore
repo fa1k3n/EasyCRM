@@ -12,7 +12,9 @@ id_ed25519*
 # Exporter och säkerhetskopior av kunddata
 backup/
 *.json
-# JSON som ska med trots regeln ovan: TypeScript-inställningarna och exemplet på varumärke
+# JSON som ska med trots regeln ovan: npm-projektet, TypeScript-inställningarna och exemplet på varumärke
+!package.json
+!package-lock.json
 !kundregister/tsconfig.json
 !exempel/brand.json
 
@@ -23,8 +25,11 @@ varumarke/
 # Lokal markering som visar att mappen skrivs av en export; följer aldrig med till git
 .crm-platform
 
-# Publiceringsmappar som tools\deploy.ps1 skriver (standard: <varumärkesmappen>\publicera)
+# Publiceringsmappar som tools/deploy.js skriver (standard: <varumärkesmappen>\publicera)
 publicera/
+
+# npm-paketen installeras med  npm ci  och sparas aldrig i git
+node_modules/
 
 # Tillfälliga filer
 *.tmp

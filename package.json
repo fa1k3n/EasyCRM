@@ -1,0 +1,21 @@
+{
+  "name": "kundregister",
+  "private": true,
+  "description": "A small CRM that runs as a claude.ai artifact. Build, test and publishing tools run on Node.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "node tools/build.js",
+    "deploy": "node tools/deploy.js",
+    "preview": "node tools/preview.js",
+    "test": "npm run build && jest"
+  },
+  "devDependencies": {
+    "jest": "30.5.2",
+    "jest-environment-jsdom": "30.5.2",
+    "playwright": "1.63.0",
+    "typescript": "6.0.3"
+  }
+}

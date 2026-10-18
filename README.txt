@@ -15,19 +15,20 @@ Licens: MIT (se LICENSE).
 
 Kom igång
 ---------
-Kräver Windows med PowerShell 5.1 och Microsoft Edge. Inget behöver installeras.
+Kräver Node 24 (https://nodejs.org) och git, på Windows, macOS eller Linux.
 
-1. Klona repot.
+1. Klona repot och installera npm-paketen (TypeScript, jest och playwright) i repots mapp:
+     npm ci
 2. Skapa din varumärkesmapp från exemplet (i repots mapp):
      Copy-Item exempel varumarke -Recurse
 3. Fyll i varumarke\brand.json (fälten är förklarade i filen) och byt logo.svg mot din logga
    (png, svg, jpg eller webp, högst 1 MB).
 4. Förhandsvisa med påhittade kunder (använder varumarke\ automatiskt):
-     powershell -NoProfile -ExecutionPolicy Bypass -File tools\preview.ps1
+     npm run preview
    och öppna sökvägen som skrivs ut.
 5. Sätt ihop publiceringsmappen varumarke\publicera (kontrollerar brand.json, kör alla tester):
-     powershell -NoProfile -ExecutionPolicy Bypass -File tools\deploy.ps1
-   (Med -Brand <mapp> kan du använda en annan varumärkesmapp.)
+     npm run deploy
+   (Med  npm run deploy -- --brand <mapp>  kan du använda en annan varumärkesmapp.)
 6. Be Claude (Claude Code) publicera varumarke\publicera som en artifact:
    - index.html som sidan och de andra filerna (logic.js, brand.js, loggan, ev. mail.js) bredvid.
    - Databasen: capability db med regeln path "", read "admin", write "admin", så att bara du
@@ -42,7 +43,7 @@ Valfritt i varumärkesmappen:
 - mail\mail.ts + mail\tsconfig.json: ett mailtillägg som skriver färdiga erbjudande- och
   uppföljningsmail (window.CRM_MAIL, kontraktet finns i kundregister\mail-api.d.ts). Utan
   tillägg loggar appen erbjudanden och uppföljningar utan färdig text.
-- run-tests.ps1: egna tester, körs av deploy.ps1 med -Repo <repot>.
+- run-tests.js: egna tester, körs av deploy med  node run-tests.js --repo <repot>.
 
 Innehåll
 --------
@@ -53,23 +54,25 @@ kundregister\logic.ts          Ren logik i TypeScript: datum, kontaktstatus (60/
 kundregister\logic.js          Byggd från logic.ts (ändra aldrig för hand). Används av appen.
 kundregister\mail-api.d.ts     Kontraktet för ett mailtillägg
 kundregister\tsconfig.json     Inställningar för TypeScript
-kundregister\tests\            Enhetstester för logiken (öppna run.html i en webbläsare)
+kundregister\tests\            Enhetstester för logiken (npx jest, eller öppna run.html i en webbläsare)
 exempel\                       Exempel på varumärke (brand.json och logga)
-tests\                         Pester-tester för TypeScript-bygget, förhandsvisningen och deploy.ps1
-run-tests.ps1                  Bygger logiken och kör alla tester
-tools\tsc.ps1                  Bygger logic.ts till logic.js (TypeScript 6.0.3 körs i Edge,
-                               finns i tools\typescript-6.0.3 – inget installeras)
-tools\preview.ps1              Förhandsvisar appen lokalt med påhittade kunder
-tools\deploy.ps1               Kontrollerar ett varumärke (brand.json), kör testerna och sätter
+tests\                         Tester för TypeScript-bygget, förhandsvisningen och deploy (jest)
+tools\build.js                 Bygger logic.ts till logic.js med TypeScript 6.0.3 från npm
+                               (npm run build; --project <mapp> bygger t.ex. ett mailtillägg)
+package.json                   npm-projektet: exakta versioner av utvecklingsverktygen
+                               (typescript, jest, playwright)
+tools\preview.js               Förhandsvisar appen lokalt med påhittade kunder (npm run preview)
+tools\deploy.js                Kontrollerar ett varumärke (brand.json), kör testerna och sätter
                                ihop publiceringsmappen (index.html, logic.js, brand.js, bilder,
                                ev. mail.js)
 .github\workflows\ci.yml       GitHub Actions: alla tester vid varje push
 
 Köra testerna
 -------------
-     powershell -NoProfile -ExecutionPolicy Bypass -File run-tests.ps1
+     npm ci        (en gång, och när package-lock.json ändrats)
+     npm test
 
-Först byggs och typkontrolleras logic.ts, sedan körs JavaScript-testerna i Microsoft Edge
-utan fönster och PowerShell-testerna med Pester 3.4, som följer med Windows. Inget behöver
-installeras. Testerna har ett fast "idag" (2026-10-15), så resultatet beror inte på vilken
-dag de körs. Du kan också öppna kundregister\tests\run.html direkt i webbläsaren.
+Först byggs och typkontrolleras logic.ts, sedan körs alla tester med jest: logikens tester
+(i jsdom) och verktygens tester. Testerna har ett fast "idag" (2026-10-15), så resultatet
+beror inte på vilken dag de körs. Du kan också öppna kundregister\tests\run.html direkt i
+webbläsaren.
