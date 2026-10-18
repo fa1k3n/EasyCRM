@@ -24,6 +24,6 @@ jobs:
       - name: Bygg logiken och kör alla tester
         run: npm test
 
-      - name: logic.js ska vara byggd från logic.ts
+      - name: logic.js ska vara byggd från logiken
         run: |
-          git diff --exit-code -- kundregister/logic.js || { echo "logic.js är inte byggd från aktuell logic.ts. Kör npm test lokalt och committa logic.js."; exit 1; }
+          git diff --exit-code -- kundregister/logic.js || { echo "logic.js är inte byggd från aktuell logik (kundregister/logic/). Kör npm test lokalt och committa logic.js."; exit 1; }

@@ -1,13 +1,14 @@
 {
-  "//": "Kompileras med npm run build (tools/build.js, typescript 6.0.3 från npm). Samma inställningar läses av VS Code.",
+  "//": "The logic (logic/*.ts): type-checked and bundled into logic.js by npm run build (tools/build.js: typescript 6.0.3 for the types, Vite for the bundle). crmBundle says what is bundled. VS Code reads the same settings.",
   "compilerOptions": {
     "target": "ES2020",
     "lib": ["ES2020", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "strict": true,
-    "noEmitOnError": true,
-    "removeComments": false,
-    "newLine": "lf",
+    "noEmit": true,
     "skipLibCheck": true
   },
-  "files": ["logic.ts"]
+  "include": ["logic/*.ts"],
+  "crmBundle": {"entry": "logic/index.ts", "out": "logic.js", "name": "CRMLogic"}
 }

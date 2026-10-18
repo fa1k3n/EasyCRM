@@ -1,19 +1,20 @@
-/* Kontraktet för ett mailtillägg (window.CRM_MAIL).
- * Ett företags tillägg (t.ex. i en privat varumärkesmapp) byggs mot den här filen, så att det typkontrolleras mot appen.
- * Appen använder tillägget bara om checkMailModule (logic.ts) godkänner det; annars loggas erbjudanden utan färdig text. */
+/* The contract for a mail plugin (window.CRM_MAIL, from mail.js). A company's plugin (e.g. in its brand folder) is
+ * built against this file, so it is type-checked against the app. The app only uses the plugin if checkMailModule
+ * (kundregister/logic/mail.ts) accepts it; otherwise offers are logged without text. In the React app the same texts
+ * can also come from an extension's `mail` (exempel/extensions/README.md). */
 
-/** Det tillägget får veta om kunden */
+/** What the plugin is told about the customer */
 interface CrmMailCustomer { name?: string; status?: string; type?: string; types?: string[]; jobs?: unknown[]; comms?: unknown[]; }
-/** Det tillägget får veta om eventet */
+/** What the plugin is told about the event */
 interface CrmMailEvent { id?: string; title?: string; date?: string; endDate?: string; location?: string; }
-/** Ett färdigt mail: ämne, text och en kort anteckning till kontaktloggen; tags (valfritt) visas som etiketter, hint (valfritt) som tips under texten */
+/** A finished mail: subject, body and a short note for the contact log; tags (optional) are shown as labels, hint (optional) as a tip under the text */
 interface CrmMailText { subject: string; body: string; note: string; kind?: string; tags?: string[]; hint?: string; }
-/** Det appen kräver av ett mailtillägg */
+/** What the app requires of a mail plugin */
 interface CrmMailModule {
   buildOffer(c: CrmMailCustomer, e: CrmMailEvent): CrmMailText;
   buildEventFollowUp(c: CrmMailCustomer, e: CrmMailEvent): CrmMailText;
 }
-/** Hjälpfunktionerna i logiken (window.CRMLogic) som ett tillägg får använda */
+/** The logic's helpers (window.CRMLogic) a plugin may use */
 interface CrmLogicForMail {
   fmtDate(iso?: string | null): string;
   dayMonth(iso: string): string;

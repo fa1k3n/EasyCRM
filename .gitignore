@@ -16,10 +16,12 @@ backup/
 !package.json
 !package-lock.json
 !kundregister/tsconfig.json
+!app/tsconfig.json
 !exempel/brand.json
 
 # Ditt företags varumärke (brand.json, bilder, mailtillägg) och publiceringsmappen i den: sparas aldrig i git.
-# Skapa med  Copy-Item exempel varumarke -Recurse  och säkerhetskopiera den själv.
+# Skapa med  Copy-Item exempel profile -Recurse  och säkerhetskopiera den själv.
+profile/
 varumarke/
 
 # Lokal markering som visar att mappen skrivs av en export; följer aldrig med till git
@@ -30,6 +32,8 @@ publicera/
 
 # npm-paketen installeras med  npm ci  och sparas aldrig i git
 node_modules/
+# React-appens bygge (npm run build skapar den)
+app/dist/
 
 # Tillfälliga filer
 *.tmp

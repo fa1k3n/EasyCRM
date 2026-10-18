@@ -15,10 +15,12 @@ afterEach(() => fs.rmSync(tmp, {recursive: true, force: true}));
 
 const write = (file, text) => { fs.mkdirSync(path.dirname(file), {recursive: true}); fs.writeFileSync(file, text, 'utf8'); };
 const read = file => fs.readFileSync(file, 'utf8');
-// A copy of kundregister/ with logic.ts and tsconfig.json, and a stale logic.js
+// A copy of kundregister/ with the logic's modules (logic/) and tsconfig.json, and a stale logic.js.
+// edit changes the text of logic/time.ts (e.g. to add a type error).
 function appCopy(edit = t => t) {
   const dir = path.join(tmp, 'kundregister');
-  write(path.join(dir, 'logic.ts'), edit(read(path.join(ROOT, 'kundregister', 'logic.ts'))));
+  fs.cpSync(path.join(ROOT, 'kundregister', 'logic'), path.join(dir, 'logic'), {recursive: true});
+  write(path.join(dir, 'logic', 'time.ts'), edit(read(path.join(ROOT, 'kundregister', 'logic', 'time.ts'))));
   write(path.join(dir, 'tsconfig.json'), read(path.join(ROOT, 'kundregister', 'tsconfig.json')));
   write(path.join(dir, 'logic.js'), OLD_JS);
   return dir;
@@ -33,7 +35,7 @@ describe('tools/build.js', () => {
   });
 
   describe('without type errors', () => {
-    test('exits with 0, writes logic.js from logic.ts without types', () => {
+    test('exits with 0, writes logic.js from the logic modules without types', () => {
       const dir = appCopy();
       const r = run('--project', dir);
       expect(r.status).toBe(0);
@@ -50,7 +52,7 @@ describe('tools/build.js', () => {
   });
 
   test('with a type error: exits with 1 and leaves logic.js untouched', () => {
-    const dir = appCopy(t => t.replace("  'use strict';", "  'use strict';\n  const fel: number = 'not a number';"));
+    const dir = appCopy(t => t + "\nexport const fel: number = 'not a number';\n");
     const r = run('--project', dir);
     expect(r.status).toBe(1);
     expect(r.stderr).toMatch(/TS2322/);
@@ -84,5 +86,23 @@ describe('tools/build.js', () => {
     const r = run('--project', tmp);
     expect(r.status).toBe(1);
     expect(r.stderr).toMatch(/tsconfig\.json/);
+  });
+});
+
+describe('tools/build.js with a type-check-only project (noEmit, like the React app)', () => {
+  test('no type errors: exits with 0 and writes no files', () => {
+    const dir = path.join(tmp, 'check-only');
+    write(path.join(dir, 'tsconfig.json'), '{"compilerOptions":{"target":"ES2020","strict":true,"noEmit":true},"files":["a.ts"]}');
+    write(path.join(dir, 'a.ts'), 'const a: number = 1;\n');
+    const r = run('--project', dir);
+    expect(r.status).toBe(0);
+    expect(fs.existsSync(path.join(dir, 'a.js'))).toBe(false);
+    expect(r.stdout).toMatch(/no type errors/);
+  });
+  test('a type error: exits with 1', () => {
+    const dir = path.join(tmp, 'check-only-error');
+    write(path.join(dir, 'tsconfig.json'), '{"compilerOptions":{"target":"ES2020","strict":true,"noEmit":true},"files":["a.ts"]}');
+    write(path.join(dir, 'a.ts'), "const a: number = 'x';\n");
+    expect(run('--project', dir).status).toBe(1);
   });
 });

@@ -197,3 +197,56 @@ describe('tools/deploy.js', () => {
     });
   });
 });
+
+describe('tools/deploy.js --react (the React app)', () => {
+  test('the publish folder gets the React page fragment, app.js and app.css instead of the old index.html', () => {
+    const out = path.join(tmp, 'react-out');
+    const r = deploy('--brand', path.join(ROOT, 'exempel'), '--out-dir', out, '--react');
+    expect(r.code).toBe(0);
+    for (const f of ['index.html', 'app.js', 'app.css', 'logic.js', 'brand.js', 'logo.svg']) expect(exists(out, f)).toBe(true);
+    expect(read(path.join(out, 'index.html'))).toMatch('<div id="root"></div>');
+  }, 120000);
+});
+
+// The brand folder is called profile/ (#3); an old varumarke/ still works, with a message to rename it
+describe('tools/deploy.js and the profile/ folder (#3)', () => {
+  function repoCopy(name) {
+    const dir = path.join(tmp, name);
+    write(path.join(dir, 'tools', 'deploy.js'), read(SCRIPT));
+    for (const f of ['index.html', 'logic.js', 'mail-api.d.ts']) write(path.join(dir, 'kundregister', f), read(path.join(ROOT, 'kundregister', f)));
+    fs.cpSync(path.join(ROOT, 'exempel'), path.join(dir, 'exempel'), {recursive: true});
+    return dir;
+  }
+  const run = repo => {
+    const r = spawnSync(process.execPath, [path.join(repo, 'tools', 'deploy.js'), '--skip-repo-tests'], {encoding: 'utf8'});
+    return {code: r.status, out: r.stdout + r.stderr};
+  };
+  test('without --brand, profile/ in the repo root is used, and the publish folder becomes profile/publicera', () => {
+    const repo = repoCopy('profile');
+    fs.cpSync(path.join(repo, 'exempel'), path.join(repo, 'profile'), {recursive: true});
+    const r = run(repo);
+    expect(r.code).toBe(0);
+    expect(read(path.join(repo, 'profile', 'publicera', 'brand.js'))).toMatch('Exempelstudion AB');
+    expect(r.out).not.toMatch('varumarke');
+  });
+  test('an old varumarke/ is still used, with a message to rename it to profile/', () => {
+    const repo = repoCopy('old');
+    fs.cpSync(path.join(repo, 'exempel'), path.join(repo, 'varumarke'), {recursive: true});
+    const r = run(repo);
+    expect(r.code).toBe(0);
+    expect(r.out).toMatch(/rename.*varumarke.*profile/i);
+  });
+  test('with both, profile/ is used', () => {
+    const repo = repoCopy('both');
+    fs.cpSync(path.join(repo, 'exempel'), path.join(repo, 'profile'), {recursive: true});
+    fs.cpSync(path.join(repo, 'exempel'), path.join(repo, 'varumarke'), {recursive: true});
+    expect(run(repo).code).toBe(0);
+    expect(exists(repo, 'profile', 'publicera', 'brand.js')).toBe(true);
+    expect(exists(repo, 'varumarke', 'publicera')).toBe(false);
+  });
+  test('without a brand folder the error says how to create profile/ from exempel', () => {
+    const r = run(repoCopy('none'));
+    expect(r.code).toBe(1);
+    expect(r.out).toMatch('cp -r exempel profile');
+  });
+});

@@ -79,3 +79,35 @@ describe('tools/preview.js output', () => {
     expect(r.stderr).toMatch('brand.json');
   });
 });
+
+describe('tools/preview.js --react (the React app)', () => {
+  test('builds the app and writes preview.html with the root element, app.js and app.css; the fake database loads first', () => {
+    const out = path.join(tmp, 'react-out');
+    const r = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'preview.js'), '--react', '--out-dir', out, '--brand', path.join(ROOT, 'exempel')], {encoding: 'utf8'});
+    expect(r.status).toBe(0);
+    const html = read(path.join(out, 'preview.html'));
+    expect(html).toMatch('<div id="root"></div>');
+    expect(html.indexOf('preview-stub.js')).toBeLessThan(html.indexOf('app.js'));
+    for (const f of ['app.js', 'app.css', 'logic.js', 'brand.js']) expect(exists(out, f)).toBe(true);
+  }, 120000);
+});
+
+describe('tools/preview.js and the profile/ folder (#3)', () => {
+  test('profile/ in the repo root is used, before an old varumarke/', () => {
+    const repo = repoCopy('profile');
+    write(path.join(repo, 'profile', 'brand.json'), '{"company": {"name": "Profilbolaget AB"}}');
+    write(path.join(repo, 'varumarke', 'brand.json'), '{"company": {"name": "Gamla AB"}}');
+    const out = path.join(tmp, 'profile-out');
+    expect(preview(repo, '--out-dir', out).status).toBe(0);
+    expect(read(path.join(out, 'brand.js'))).toMatch('Profilbolaget AB');
+  });
+  test('an old varumarke/ alone still works, with a message to rename it', () => {
+    const repo = repoCopy('old');
+    write(path.join(repo, 'varumarke', 'brand.json'), '{"company": {"name": "Gamla AB"}}');
+    const out = path.join(tmp, 'old-out');
+    const r = preview(repo, '--out-dir', out);
+    expect(r.status).toBe(0);
+    expect(read(path.join(out, 'brand.js'))).toMatch('Gamla AB');
+    expect(r.stdout + r.stderr).toMatch(/rename.*varumarke.*profile/i);
+  });
+});

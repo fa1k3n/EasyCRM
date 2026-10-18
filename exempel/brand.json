@@ -1,8 +1,11 @@
 {
-  "//": "Exempel på varumärke. Kopiera mappen exempel/ till varumarke/ i repots rot (ignoreras av git), fyll i och prova med npm run preview och sätt ihop publiceringsmappen med npm run deploy (båda använder varumarke/ automatiskt). Fält som börjar med // är kommentarer och ignoreras.",
+  "//": "Exempel på varumärke. Kopiera mappen exempel/ till profile/ i repots rot (ignoreras av git), fyll i och prova med npm run preview och sätt ihop publiceringsmappen med npm run deploy (båda använder profile/ automatiskt). Fält som börjar med // är kommentarer och ignoreras.",
 
   "// company": "name: företagets namn (visas i rubriken och fliken). short: valfri kortform.",
   "company": {"name": "Exempelstudion AB"},
+
+  "// language": "Valfritt: appens språk som en språkkod med två små bokstäver. Svenska (\"sv\") används om fältet saknas eller om språket inte finns i appen.",
+  "language": "sv",
 
   "// logo": "Filnamn på en bild i samma mapp (png, svg, jpg eller webp, högst 1 MB) eller en https-adress. Visas 44×44 px.",
   "logo": "logo.svg",
@@ -20,7 +23,7 @@
   ],
   "defaultSender": "standard",
 
-  "// customerTypes": "Kundtyper (en kund kan ha flera). id: a–z, 0–9, - och _, får inte bytas när kunder redan har typen. label: namnet som visas. color: #rrggbb (colorDark valfri för mörkt läge). icon: person, kamera, film, sandning, pokal, stjarna, portfolj, kalender, pratbubbla eller prick – eller svg: egen ikon (SVG-innehåll för viewBox 0 0 16 16; bara elementen path, circle, rect, line, polyline, polygon, ellipse och g med ritattribut som d, fill och stroke). sender: valfri avsändare för kunder med typen.",
+  "// customerTypes": "Kundtyper (en kund kan ha flera). id: a–z, 0–9, - och _, får inte bytas när kunder redan har typen. label: namnet som visas. color: #rrggbb (colorDark valfri för mörkt läge). icon: person, kamera, film, sandning, pokal, stjarna, portfolj, kalender, pratbubbla eller prick, eller (bara i React-appen) ett lucide-namn som calendar-days (lucide.dev/icons; ett okänt namn ger en prick) – eller svg: egen ikon (SVG-innehåll för viewBox 0 0 16 16; bara elementen path, circle, rect, line, polyline, polygon, ellipse och g med ritattribut som d, fill och stroke). sender: valfri avsändare för kunder med typen.",
   "customerTypes": [
     {"id": "konsultation", "label": "Konsultation", "color": "#0f766e", "icon": "pratbubbla"},
     {"id": "projekt", "label": "Projekt", "color": "#7c3aed", "icon": "portfolj"},

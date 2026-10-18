@@ -179,4 +179,14 @@
       eq(L.contrastRatio('#123456', '#123456'), 1);
     });
   });
+
+  describe('Varumärke: språk (language)', () => {
+    const base = {company: {name: 'X'}, colors: {accent: '#0f766e', ink: '#1f2933', bg: '#f6f7f7'}, senders: [{id: 's', signature: ['X']}], defaultSender: 's', customerTypes: []};
+    test('language är valfritt', () => eq(L.validateBrand(base).filter(e => /language/.test(e)), []));
+    test('en språkkod med två små bokstäver godtas', () => eq(L.validateBrand({...base, language: 'en'}).filter(e => /language/.test(e)), []));
+    test('något annat ger ett fel som namnger language', () => {
+      ok(L.validateBrand({...base, language: 'Svenska'}).some(e => /language/.test(e)), 'Svenska');
+      ok(L.validateBrand({...base, language: 5}).some(e => /language/.test(e)), '5');
+    });
+  });
 })();

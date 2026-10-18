@@ -1,7 +1,10 @@
 'use strict';
 /* Checks a brand and assembles a publish folder for the CRM.
- * Usage: node tools/deploy.js [--brand <folder with brand.json>] [--out-dir <folder>]   (npm run deploy -- ...)
- *   Without --brand, varumarke/ in the repo root is used (ignored by git; create it with  cp -r exempel varumarke ).
+ * Usage: node tools/deploy.js [--brand <folder with brand.json>] [--out-dir <folder>] [--react]   (npm run deploy -- ...)
+ *   --react: publish the new React app (app/, built with tools/build-app.js, with the brand folder's extensions/)
+ *   instead of kundregister/index.html.
+ *   Without --brand, profile/ in the repo root is used (ignored by git; create it with  cp -r exempel profile ).
+ *   An old varumarke/ (the folder's earlier name) is still used if there is no profile/, with a message to rename it.
  *   1. brand.json is checked with the app's own check (validateBrand): valid JSON, required fields, colours,
  *      contrast (WCAG AA 4.5:1), unique customer type ids and that every sender a customer type points to exists.
  *   2. The images in the brand folder (png, svg, jpg, jpeg, webp) may be at most 1 MB, and the logo must exist.
@@ -13,13 +16,14 @@
  * --skip-repo-tests skips the repo's tests (used by the tests of this script, which are part of the repo's tests).
  * Exit code 0 = the publish folder is ready, 1 = an error (then nothing is written). */
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const {spawnSync} = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..');
 const IMAGES = ['.png', '.svg', '.jpg', '.jpeg', '.webp'];
 const MAX_IMAGE = 1024 * 1024;
-const PUBLISHED = ['index.html', 'logic.js', 'brand.js', 'mail.js'];
+const PUBLISHED = ['index.html', 'logic.js', 'brand.js', 'mail.js', 'app.js', 'app.css'];
 
 class DeployError extends Error {
   constructor(errors) { super(errors.join('\n')); this.errors = errors; }
@@ -27,9 +31,10 @@ class DeployError extends Error {
 const fail = (...errors) => { throw new DeployError(errors); };
 
 function parseArgs(argv) {
-  const args = {brand: '', outDir: '', skipRepoTests: false};
+  const args = {brand: '', outDir: '', skipRepoTests: false, react: false};
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--skip-repo-tests') args.skipRepoTests = true;
+    else if (argv[i] === '--react') args.react = true;
     else if (argv[i] === '--brand' && argv[i + 1]) args.brand = argv[++i];
     else if (argv[i] === '--out-dir' && argv[i + 1]) args.outDir = argv[++i];
     else fail(`Unknown or incomplete argument: ${argv[i]}`);
@@ -64,8 +69,12 @@ function deploy(args) {
   // ---------- Folders ----------
   let brandDir = args.brand;
   if (!brandDir) {
-    brandDir = path.join(ROOT, 'varumarke');
-    if (!fs.existsSync(brandDir)) fail(`The folder varumarke/ is missing in ${ROOT}. Create it from the example and fill in brand.json: cp -r exempel varumarke (or give --brand <folder>).`);
+    brandDir = path.join(ROOT, 'profile');
+    if (!fs.existsSync(brandDir) && fs.existsSync(path.join(ROOT, 'varumarke'))) {
+      brandDir = path.join(ROOT, 'varumarke');
+      console.warn('  Note: the brand folder is now called profile/. Rename it: mv varumarke profile (the old name still works for now).');
+    }
+    if (!fs.existsSync(brandDir)) fail(`The folder profile/ is missing in ${ROOT}. Create it from the example and fill in brand.json: cp -r exempel profile (or give --brand <folder>; an old varumarke/ also works).`);
   }
   brandDir = path.resolve(brandDir);
   if (!fs.statSync(brandDir, {throwIfNoEntry: false})?.isDirectory()) fail(`The brand folder does not exist: ${brandDir}`);
@@ -117,10 +126,26 @@ function deploy(args) {
     if (run('npm', ['test'], {cwd: ROOT}) !== 0) fail('The repo\'s tests failed.');
   }
 
-  // ---------- 5. The publish folder ----------
-  fs.mkdirSync(out, {recursive: true});
-  for (const e of fs.readdirSync(out, {withFileTypes: true})) if (e.isFile()) fs.rmSync(path.join(out, e.name));
-  for (const f of ['index.html', 'logic.js']) fs.copyFileSync(path.join(ROOT, 'kundregister', f), path.join(out, f));
+  // ---------- The React app (--react), built before anything is written ----------
+  const appDir = args.react ? fs.mkdtempSync(path.join(os.tmpdir(), 'crm-deploy-app-')) : '';
+  try {
+    if (args.react) {
+      console.log('== The React app (tools/build-app.js) ==');
+      // The brand folder's extensions (extensions/) are built into the app; an error in one stops the publish
+      const extDir = path.join(brandDir, 'extensions');
+      const ext = fs.existsSync(extDir) ? ['--extensions', extDir] : [];
+      if (run(process.execPath, [path.join(ROOT, 'tools', 'build-app.js'), '--out-dir', appDir, ...ext]) !== 0) fail('The React app or an extension could not be built (see above).');
+    }
+
+    // ---------- 5. The publish folder ----------
+    fs.mkdirSync(out, {recursive: true});
+    for (const e of fs.readdirSync(out, {withFileTypes: true})) if (e.isFile()) fs.rmSync(path.join(out, e.name));
+    if (args.react) for (const f of ['index.html', 'app.js', 'app.css']) fs.copyFileSync(path.join(appDir, f), path.join(out, f));
+    else fs.copyFileSync(path.join(ROOT, 'kundregister', 'index.html'), path.join(out, 'index.html'));
+    fs.copyFileSync(path.join(ROOT, 'kundregister', 'logic.js'), path.join(out, 'logic.js'));
+  } finally {
+    if (appDir) fs.rmSync(appDir, {recursive: true, force: true});
+  }
   fs.writeFileSync(path.join(out, 'brand.js'), `window.BRAND = ${check.text.trim()};\n`, 'utf8');
   for (const name of images) fs.copyFileSync(path.join(brandDir, name), path.join(out, name));
   if (hasMail) fs.copyFileSync(mailJs, path.join(out, 'mail.js'));
