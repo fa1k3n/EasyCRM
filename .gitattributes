@@ -1,4 +1,4 @@
-# Radslut: git sparar text med LF och checkar ut enligt reglerna nedan (samma på din dator och på GitHub)
+# Line endings: git stores text with LF and checks it out by the rules below (the same on your computer and on GitHub)
 * text=auto
 *.md text eol=crlf
 *.txt text eol=crlf

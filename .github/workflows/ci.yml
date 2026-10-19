@@ -1,5 +1,5 @@
-# Bygger logiken och kör alla tester vid varje push och pull request.
-name: Tester
+# Builds the logic and runs all tests on every push and pull request.
+name: Tests
 on:
   push:
   pull_request:
@@ -18,12 +18,12 @@ jobs:
         with:
           node-version-file: .nvmrc
 
-      - name: npm-paketen
+      - name: npm packages
         run: npm ci
 
-      - name: Bygg logiken och kör alla tester
+      - name: Build the logic and run all tests
         run: npm test
 
-      - name: logic.js ska vara byggd från logiken
+      - name: logic.js must be built from the logic
         run: |
-          git diff --exit-code -- kundregister/logic.js || { echo "logic.js är inte byggd från aktuell logik (kundregister/logic/). Kör npm test lokalt och committa logic.js."; exit 1; }
+          git diff --exit-code -- crm/logic.js || { echo "logic.js is not built from the current logic (crm/logic/). Run npm test locally and commit logic.js."; exit 1; }

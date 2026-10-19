@@ -4,12 +4,12 @@ An extension adds your own parts to the customer register (the React app): a **s
 a **badge on the customer rows** in the list, and optionally **ready mail texts** for offers and follow-ups. It is
 built together with the app when you publish, so it is type-checked like the rest of the app.
 
-The example in `next-step/` ("Nästa steg") lets you note the next thing to do with a customer, and shows a badge in
+The example in `next-step/` ("Next step") lets you note the next thing to do with a customer, and shows a badge in
 the list while one is noted. Copy it as a starting point. If you do not want it in your app, delete the folder.
 
 ## Where extensions live
 
-In your brand folder (`profile/`, made from `exempel/`):
+In your brand folder (`profile/`, made from `example/`):
 
 ```
 profile/
@@ -32,8 +32,8 @@ import type {ExtensionManifest} from 'crm-extension-api';
 const manifest: ExtensionManifest = {
   id: 'next-step',          // a–z, 0–9, - and _; also the key of your data on the customer. Never change it later.
   apiVersion: 1,            // the API version the extension is written for
-  name: 'Nästa steg',
-  customerSections: [{id: 'next-step', title: 'Nästa steg', Component: NextStep}],
+  name: 'Next step',
+  customerSections: [{id: 'next-step', title: 'Next step', Component: NextStep}],
   listBadges: [badge],
   // mail: {buildOffer, buildEventFollowUp}   ready mail texts, see below
 };
@@ -100,7 +100,7 @@ call the badge with made-up customers. See `next-step/index.test.tsx`. Never use
 ```
 npm run preview                      the app with your extensions and made-up customers
 npm run deploy                       checks brand.json, type-checks and builds your extensions, runs the tests,
-                                     and writes the publish folder (profile/publicera)
+                                     and writes the publish folder (profile/publish)
 ```
 
 Then publish the publish folder as before.

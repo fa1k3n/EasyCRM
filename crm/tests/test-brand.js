@@ -1,6 +1,6 @@
-/* Varumärke för de befintliga testerna i logic.test.js: samma kundtyper, gamla typvärden och avsändare som tidigare
- * var inbyggda i logiken, så att testerna prövar exakt samma sak som förut.
- * Avsändare och färger är påhittade; tester för ett riktigt företags signaturer och mail hör hemma i dess privata mapp. */
+/* The brand for the tests in logic.test.js: the same customer types and senders that were once built into the logic,
+ * so that the tests check exactly the same thing as before.
+ * Senders and colours are made up; tests of a real company's signatures and mails belong in its private folder. */
 window.TEST_BRAND = {
   company: {name: 'Testföretaget'},
   colors: {accent: '#0f766e', ink: '#1f2933', bg: '#f6f7f7'},

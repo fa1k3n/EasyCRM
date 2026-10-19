@@ -36,9 +36,9 @@ function buildPreview({outDir, brand}) {
     '<style>body{margin:0}[hidden]{display:none!important}</style>' +
     '<script src="preview-stub.js"></script></head><body>\n' + page + '\n</body></html>';
   fs.writeFileSync(path.join(outDir, 'preview.html'), html, 'utf8');
-  fs.copyFileSync(path.join(ROOT, 'kundregister', 'logic.js'), path.join(outDir, 'logic.js'));
+  fs.copyFileSync(path.join(ROOT, 'crm', 'logic.js'), path.join(outDir, 'logic.js'));
   fs.copyFileSync(path.join(ROOT, 'tools', 'preview-stub.js'), path.join(outDir, 'preview-stub.js'));
-  fs.copyFileSync(path.join(ROOT, 'kundregister', 'logo.svg'), path.join(outDir, 'logo.svg'));
+  fs.copyFileSync(path.join(ROOT, 'crm', 'logo.svg'), path.join(outDir, 'logo.svg'));
   fs.rmSync(path.join(outDir, 'brand.js'), {force: true});
   if (brand) {
     const json = fs.readFileSync(path.join(brand, 'brand.json'), 'utf8').replace(/^\uFEFF/, '');

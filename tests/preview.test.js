@@ -16,11 +16,11 @@ const read = file => fs.readFileSync(file, 'utf8');
 const exists = (...p) => fs.existsSync(path.join(...p));
 function repoCopy(name) {
   const dir = path.join(tmp, name);
-  for (const f of ['tools/preview.js', 'tools/preview-stub.js', 'tools/build-app.js', 'tools/build.js', 'kundregister/logic.js', 'kundregister/logo.svg']) {
+  for (const f of ['tools/preview.js', 'tools/preview-stub.js', 'tools/build-app.js', 'tools/build.js', 'crm/logic.js', 'crm/logo.svg']) {
     write(path.join(dir, f), fs.readFileSync(path.join(ROOT, f)));
   }
   // Building the React app needs the app, the logic's types and node_modules; links instead of copies
-  for (const d of ['app', 'node_modules', path.join('kundregister', 'logic')]) fs.symlinkSync(path.join(ROOT, d), path.join(dir, d), 'junction');
+  for (const d of ['app', 'node_modules', path.join('crm', 'logic')]) fs.symlinkSync(path.join(ROOT, d), path.join(dir, d), 'junction');
   return dir;
 }
 const preview = (repo, ...args) => spawnSync(process.execPath, [path.join(repo, 'tools', 'preview.js'), ...args], {encoding: 'utf8'});
@@ -84,7 +84,7 @@ describe('tools/preview.js output', () => {
 describe('tools/preview.js (the React app)', () => {
   test('builds the app and writes preview.html with the root element, app.js and app.css; the fake database loads first', () => {
     const out = path.join(tmp, 'react-out');
-    const r = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'preview.js'), '--out-dir', out, '--brand', path.join(ROOT, 'exempel')], {encoding: 'utf8'});
+    const r = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'preview.js'), '--out-dir', out, '--brand', path.join(ROOT, 'example')], {encoding: 'utf8'});
     expect(r.status).toBe(0);
     const html = read(path.join(out, 'preview.html'));
     expect(html).toMatch('<div id="root"></div>');

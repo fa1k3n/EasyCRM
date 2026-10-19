@@ -1,6 +1,7 @@
 /* The app's texts: t(key, params) looks the key up in the current language, then in Swedish. The language comes from
- * brand.json ("language", e.g. "sv"); an unknown language falls back to Swedish. A new language is a catalog with
+ * brand.json ("language": "sv" or "en"); an unknown language falls back to Swedish. A new language is a catalog with
  * the same keys (Catalog), registered with addCatalog; keys it lacks are taken from Swedish. */
+import {en} from './en';
 import {sv} from './sv';
 
 type SvKey = keyof typeof sv;
@@ -10,7 +11,7 @@ export type TextKey = Exclude<SvKey, `${string}.${'one' | 'other'}`> | PluralBas
 export type Catalog = Record<SvKey, string>;
 export type Params = Record<string, string | number>;
 
-const catalogs: Record<string, Partial<Catalog>> = {sv};
+const catalogs: Record<string, Partial<Catalog>> = {sv, en};
 let current = 'sv';
 
 /* Registers (or extends) the texts of a language. */

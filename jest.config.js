@@ -1,5 +1,5 @@
 /* jest settings. Three groups of tests:
- * - app: the logic's browser tests (kundregister/tests), loaded as scripts by run.jest.js in jsdom
+ * - app: the logic's browser tests (crm/tests), loaded as scripts by run.jest.js in jsdom
  * - ui: the React app's component tests (app/src/**\/*.test.ts(x)), TSX compiled by Babel, in jsdom
  * - tools: the tools' tests in tests/*.test.js, run in Node */
 const babel = ['babel-jest', {
@@ -10,11 +10,11 @@ const babel = ['babel-jest', {
 
 module.exports = {
   projects: [
-    {displayName: 'app', testEnvironment: 'jsdom', testMatch: ['<rootDir>/kundregister/tests/run.jest.js']},
+    {displayName: 'app', testEnvironment: 'jsdom', testMatch: ['<rootDir>/crm/tests/run.jest.js']},
     {
       displayName: 'ui',
       testEnvironment: 'jsdom',
-      testMatch: ['<rootDir>/app/src/**/*.test.{ts,tsx}', '<rootDir>/exempel/extensions/**/*.test.{ts,tsx}'],
+      testMatch: ['<rootDir>/app/src/**/*.test.{ts,tsx}', '<rootDir>/example/extensions/**/*.test.{ts,tsx}'],
       setupFiles: ['<rootDir>/app/test/setup.js'],
       transform: {'\\.[jt]sx?$': babel},
       moduleNameMapper: {'\\.css$': '<rootDir>/app/test/style-stub.js', '^virtual:crm-extensions$': '<rootDir>/app/test/no-extensions.js'}

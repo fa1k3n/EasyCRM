@@ -1,18 +1,20 @@
-/* Colours: the whole palette for light and dark mode is worked out from 3–4 brand colours, with WCAG contrast checks. */
+/* Colours: the whole palette for light and dark mode is worked out from 3–4 brand colours, with WCAG contrast checks.
+ * The error and warning texts are in lang (the current language if not given). */
+import {language, tx} from './i18n';
 
-function rgb(c: string, field: string): [number, number, number] {
+function rgb(c: string, field: string, lang = language()): [number, number, number] {
   const m = /^#([0-9a-f]{6})$/i.exec(String(c || '').trim());
-  if (!m) throw new Error(`Ogiltig färg i ${field}: "${c}" (ange #rrggbb)`);
+  if (!m) throw new Error(tx('color.invalid', {field, value: String(c)}, lang));
   const n = parseInt(m[1], 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
-export const hex = (c: string, field: string): string => '#' + rgb(c, field).map(v => v.toString(16).padStart(2, '0')).join('');
+export const hex = (c: string, field: string, lang?: string): string => '#' + rgb(c, field, lang).map(v => v.toString(16).padStart(2, '0')).join('');
 export const mix = (a: string, b: string, t: number): string => {
-  const x = rgb(a, 'färg'), y = rgb(b, 'färg');
+  const x = rgb(a, tx('color.field')), y = rgb(b, tx('color.field'));
   return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join('');
 };
 const luminance = (c: string): number => {
-  const [r, g, b] = rgb(c, 'färg').map(v => { const s = v / 255; return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4); });
+  const [r, g, b] = rgb(c, tx('color.field')).map(v => { const s = v / 255; return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4); });
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 };
 // Contrast ratio according to WCAG: 1 (none) to 21 (black on white)
@@ -20,9 +22,9 @@ export const contrastRatio = (a: string, b: string): number => { const [x, y] = 
 const bestOn = (bg: string, options: string[]): string => options.reduce((best, o) => contrastRatio(o, bg) > contrastRatio(best, bg) ? o : best);
 const MIN_TEXT = 4.5;
 
-export function deriveColors(colors: BrandColors): DerivedColors {
-  const accent = hex(colors.accent, 'colors.accent'), ink = hex(colors.ink, 'colors.ink'), bg = hex(colors.bg, 'colors.bg');
-  const hover = colors.accentHover ? hex(colors.accentHover, 'colors.accentHover') : mix(accent, '#000000', 0.16);
+export function deriveColors(colors: BrandColors, lang = language()): DerivedColors {
+  const accent = hex(colors.accent, 'colors.accent', lang), ink = hex(colors.ink, 'colors.ink', lang), bg = hex(colors.bg, 'colors.bg', lang);
+  const hover = colors.accentHover ? hex(colors.accentHover, 'colors.accentHover', lang) : mix(accent, '#000000', 0.16);
   const [ir, ig, ib] = rgb(ink, 'colors.ink');
   const light: Record<string, string> = {
     bg, surface: '#ffffff', sunk: mix(bg, ink, 0.08), ink, text: mix(ink, bg, 0.22), muted: mix(ink, bg, 0.32), line: mix(bg, ink, 0.13),
@@ -40,15 +42,15 @@ export function deriveColors(colors: BrandColors): DerivedColors {
   };
   for (const [mode, target] of [['light', light], ['dark', dark]] as const) {
     const o = (colors.overrides || {})[mode] || {};
-    for (const k of Object.keys(o)) target[k] = k === 'shadow' ? o[k] : hex(o[k], `colors.overrides.${mode}.${k}`);
+    for (const k of Object.keys(o)) target[k] = k === 'shadow' ? o[k] : hex(o[k], `colors.overrides.${mode}.${k}`, lang);
   }
   const warnings: string[] = [];
   // WCAG AA for normal text (4.5:1): main text, body text, muted text and text on the accent colour (buttons, labels)
-  const checks: [string, string, string][] = [['huvudtexten (ink)', 'ink', 'bg'], ['brödtexten (text)', 'text', 'bg'], ['den dämpade texten (muted)', 'muted', 'bg'], ['texten på accentfärgen (accent-ink)', 'accent-ink', 'accent']];
-  for (const [name, p] of [['ljust läge', light], ['mörkt läge', dark]] as const) {
+  const checks = [['color.ink', 'ink', 'bg'], ['color.text', 'text', 'bg'], ['color.muted', 'muted', 'bg'], ['color.accentInk', 'accent-ink', 'accent']] as const;
+  for (const [name, p] of [['color.light', light], ['color.dark', dark]] as const) {
     for (const [label, fg, back] of checks) {
       const c = contrastRatio(p[fg], p[back]);
-      if (c < MIN_TEXT) warnings.push(`${name}: ${label} har för låg kontrast mot ${back === 'bg' ? 'bakgrunden' : 'accentfärgen'} (${c.toFixed(1)}:1, minst ${MIN_TEXT}:1)`);
+      if (c < MIN_TEXT) warnings.push(tx('color.lowContrast', {mode: tx(name, {}, lang), label: tx(label, {}, lang), against: tx(back === 'bg' ? 'color.onBg' : 'color.onAccent', {}, lang), ratio: c.toFixed(1), min: MIN_TEXT}, lang));
     }
   }
   return {light, dark, warnings};

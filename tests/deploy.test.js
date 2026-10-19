@@ -1,4 +1,4 @@
-/* Tests for tools/deploy.js: the check of a brand and the publish folder. The brands are built from exempel/ in a
+/* Tests for tools/deploy.js: the check of a brand and the publish folder. The brands are built from example/ in a
  * temporary folder, so no real files change. --skip-repo-tests is used, since the repo's tests (which include this
  * file) would otherwise run themselves. Covers the cases of the old tests/deploy.Tests.ps1. */
 const fs = require('fs');
@@ -19,14 +19,14 @@ const exists = (...p) => fs.existsSync(path.join(...p));
 // A brand in the temp folder: the example's brand.json, changed by change(text), and the logo
 function brand(name, change = t => t) {
   const dir = path.join(tmp, name);
-  write(path.join(dir, 'brand.json'), change(read(path.join(ROOT, 'exempel', 'brand.json'))));
-  fs.copyFileSync(path.join(ROOT, 'exempel', 'logo.svg'), path.join(dir, 'logo.svg'));
+  write(path.join(dir, 'brand.json'), change(read(path.join(ROOT, 'example', 'brand.json'))));
+  fs.copyFileSync(path.join(ROOT, 'example', 'logo.svg'), path.join(dir, 'logo.svg'));
   return dir;
 }
 // What building the React app needs in a repo copy: the build tools, and links to the app, the logic and node_modules
 function appParts(dir) {
   for (const f of ['build-app.js', 'build.js']) write(path.join(dir, 'tools', f), read(path.join(ROOT, 'tools', f)));
-  for (const d of ['app', 'node_modules', path.join('kundregister', 'logic')]) fs.symlinkSync(path.join(ROOT, d), path.join(dir, d), 'junction');
+  for (const d of ['app', 'node_modules', path.join('crm', 'logic')]) fs.symlinkSync(path.join(ROOT, d), path.join(dir, d), 'junction');
 }
 function deploy(...args) {
   const r = spawnSync(process.execPath, [SCRIPT, ...args, '--skip-repo-tests'], {encoding: 'utf8'});
@@ -34,9 +34,9 @@ function deploy(...args) {
 }
 
 describe('tools/deploy.js', () => {
-  describe('the example brand in the repo (exempel/)', () => {
+  describe('the example brand in the repo (example/)', () => {
     let out, r;
-    beforeEach(() => { out = path.join(tmp, 'out'); r = deploy('--brand', path.join(ROOT, 'exempel'), '--out-dir', out); });
+    beforeEach(() => { out = path.join(tmp, 'out'); r = deploy('--brand', path.join(ROOT, 'example'), '--out-dir', out); });
 
     test('is approved: exit code 0, the React app (index.html, app.js, app.css), logic.js, brand.js and the logo, no mail plugin', () => {
       expect(r.code).toBe(0);
@@ -45,14 +45,14 @@ describe('tools/deploy.js', () => {
     });
     test('index.html is the React page fragment and logic.js the repo file', () => {
       expect(read(path.join(out, 'index.html'))).toBe(read(path.join(ROOT, 'app', 'index.html')));
-      expect(read(path.join(out, 'logic.js'))).toBe(read(path.join(ROOT, 'kundregister', 'logic.js')));
+      expect(read(path.join(out, 'logic.js'))).toBe(read(path.join(ROOT, 'crm', 'logic.js')));
     });
     test('brand.js sets window.BRAND to brand.json', () => {
       const js = read(path.join(out, 'brand.js'));
       expect(js.startsWith('window.BRAND = {')).toBe(true);
-      expect(js).toMatch('Exempelstudion AB');
+      expect(js).toMatch('Example Studio Ltd');
     });
-    test('writes nothing in exempel/', () => expect(exists(ROOT, 'exempel', 'publicera')).toBe(false));
+    test('writes nothing in example/', () => expect(exists(ROOT, 'example', 'publish')).toBe(false));
   });
 
   test('brand.json missing: exit code 1, says what is missing, no publish folder', () => {
@@ -68,10 +68,10 @@ describe('tools/deploy.js', () => {
   const set = (from, to) => t => { expect(t).toContain(from); return t.replace(from, to); };
   test.each([
     ['invalid JSON', t => t.trimEnd().replace(/}$/, ',}'), /JSON/],
-    ['company name missing', set('"company": {"name": "Exempelstudion AB"}', '"company": {}'), /company\.name/],
+    ['company name missing', set('"company": {"name": "Example Studio Ltd"}', '"company": {}'), /company\.name/],
     ['invalid colour', set('"accent": "#0f766e"', '"accent": "grön"'), /colors\.accent/],
-    ['too low contrast', set('"ink": "#1f2933"', '"ink": "#d0d4d4"'), /kontrast/],
-    ['customer type id not unique', set('"id": "projekt"', '"id": "konsultation"'), /unikt/],
+    ['too low contrast', set('"ink": "#1f2933"', '"ink": "#d0d4d4"'), /contrast/],
+    ['customer type id not unique', set('"id": "projekt"', '"id": "konsultation"'), /unique/],
     ['customer type with unknown sender', set('"icon": "stjarna"}', '"icon": "stjarna", "sender": "finns-inte"}'), /finns-inte/],
     ['logo does not exist', set('"logo": "logo.svg"', '"logo": "saknas.png"'), /saknas\.png/],
     ['brand.json is not an object', () => '[1, 2]', /object/]
@@ -121,10 +121,10 @@ describe('tools/deploy.js', () => {
       expect(read(path.join(out, 'anteckningar.txt'))).toBe('mitt');
       expect(fs.existsSync(path.join(out, 'index.html'))).toBe(false);
     });
-    test('without --out-dir it is written to publicera/ in the brand folder', () => {
+    test('without --out-dir it is written to publish/ in the brand folder', () => {
       const dir = brand('default-folder');
       expect(deploy('--brand', dir).code).toBe(0);
-      expect(exists(dir, 'publicera', 'brand.js')).toBe(true);
+      expect(exists(dir, 'publish', 'brand.js')).toBe(true);
     });
   });
 });
@@ -132,7 +132,7 @@ describe('tools/deploy.js', () => {
 describe('tools/deploy.js (the React app)', () => {
   test('the publish folder gets the React page fragment, app.js and app.css', () => {
     const out = path.join(tmp, 'react-out');
-    const r = deploy('--brand', path.join(ROOT, 'exempel'), '--out-dir', out);
+    const r = deploy('--brand', path.join(ROOT, 'example'), '--out-dir', out);
     expect(r.code).toBe(0);
     for (const f of ['index.html', 'app.js', 'app.css', 'logic.js', 'brand.js', 'logo.svg']) expect(exists(out, f)).toBe(true);
     expect(read(path.join(out, 'index.html'))).toMatch('<div id="root"></div>');
@@ -144,8 +144,8 @@ describe('tools/deploy.js and the profile/ folder (#3)', () => {
   function repoCopy(name) {
     const dir = path.join(tmp, name);
     write(path.join(dir, 'tools', 'deploy.js'), read(SCRIPT));
-    write(path.join(dir, 'kundregister', 'logic.js'), read(path.join(ROOT, 'kundregister', 'logic.js')));
-    fs.cpSync(path.join(ROOT, 'exempel'), path.join(dir, 'exempel'), {recursive: true});
+    write(path.join(dir, 'crm', 'logic.js'), read(path.join(ROOT, 'crm', 'logic.js')));
+    fs.cpSync(path.join(ROOT, 'example'), path.join(dir, 'example'), {recursive: true});
     appParts(dir);
     return dir;
   }
@@ -153,17 +153,24 @@ describe('tools/deploy.js and the profile/ folder (#3)', () => {
     const r = spawnSync(process.execPath, [path.join(repo, 'tools', 'deploy.js'), '--skip-repo-tests'], {encoding: 'utf8'});
     return {code: r.status, out: r.stdout + r.stderr};
   };
-  test('without --brand, profile/ in the repo root is used, and the publish folder becomes profile/publicera', () => {
+  test('without --brand, profile/ in the repo root is used, and the publish folder becomes profile/publish', () => {
     const repo = repoCopy('profile');
-    fs.cpSync(path.join(repo, 'exempel'), path.join(repo, 'profile'), {recursive: true});
+    fs.cpSync(path.join(repo, 'example'), path.join(repo, 'profile'), {recursive: true});
     const r = run(repo);
     expect(r.code).toBe(0);
-    expect(read(path.join(repo, 'profile', 'publicera', 'brand.js'))).toMatch('Exempelstudion AB');
+    expect(read(path.join(repo, 'profile', 'publish', 'brand.js'))).toMatch('Example Studio Ltd');
     expect(r.out).not.toMatch('varumarke');
   });
-  test('without a brand folder the error says how to create profile/ from exempel', () => {
+  test('without a brand folder the error says how to create profile/ from example', () => {
     const r = run(repoCopy('none'));
     expect(r.code).toBe(1);
-    expect(r.out).toMatch('cp -r exempel profile');
+    expect(r.out).toMatch('cp -r example profile');
   });
+});
+
+test('a Swedish brand gets the errors from the brand check in Swedish', () => {
+  const dir = brand('swedish', t => t.replace('"language": "en"', '"language": "sv"').replace('"company": {"name": "Example Studio Ltd"}', '"company": {}'));
+  const r = deploy('--brand', dir, '--out-dir', path.join(dir, 'out'));
+  expect(r.code).toBe(1);
+  expect(r.out).toMatch('company.name saknas');
 });

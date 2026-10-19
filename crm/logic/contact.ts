@@ -1,11 +1,14 @@
 /* Contact status: when a customer was last in touch (a mail, a call, a meeting or a job), yellow from 60 days and red
  * from 90 days. */
+import {type LogicTextKey, tx} from './i18n';
 import {addDays, daysSince, todayISO} from './time';
 
-export const KINDS: Record<string, string> = {mail_ut:'Mail skickat', mail_in:'Mail mottaget', samtal:'Samtal', mote:'Möte', ovrigt:'Övrigt'};
+// The kinds of contact and the invoice statuses, as {id: text} in the current language
+const labels = (prefix: string, ids: string[]): Record<string, string> => Object.fromEntries(ids.map(id => [id, tx(`${prefix}.${id}` as LogicTextKey)]));
+export const kinds = (): Record<string, string> => labels('kind', ['mail_ut', 'mail_in', 'samtal', 'mote', 'ovrigt']);
 const WARN = 60;
 export const LIMIT = 90;
-export const INV_STATUS: Record<string, string> = {published:'Skickad', paid:'Betald', overPaid:'Överbetald', underPaid:'Delbetald', overdue:'Förfallen', credited:'Krediterad', credit:'Kreditnota'};
+export const invoiceStatuses = (): Record<string, string> => labels('inv', ['published', 'paid', 'overPaid', 'underPaid', 'overdue', 'credited', 'credit']);
 
 // The latest contact up to today: the newest logged contact or job
 export function lastTouch(c: Customer): ISODate | null {
@@ -27,9 +30,9 @@ export function latestMail(c: Customer): Comm | null {
   return best;
 }
 export function daysLabel(st: ContactStatus): string {
-  if (st.level === 'never') return 'Ej kontaktad';
-  if (st.days === 0) return 'Idag';
-  return st.days + ' d sedan';
+  if (st.level === 'never') return tx('neverContacted');
+  if (st.days === 0) return tx('today');
+  return tx('daysAgo', {days: st.days!});
 }
 // The sort order "longest since contact": red first, then never contacted, then yellow, then the rest by days
 export const contactScore = (c: Customer): number => { const s = status(c); return s.level==='over' ? 3e6+s.days! : s.level==='never' ? 2e6 : s.level==='warn' ? 1e6+s.days! : s.days!; };

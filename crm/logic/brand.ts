@@ -1,6 +1,7 @@
 /* The brand: company name, colours, fonts, senders and customer types come from brand.json. The current brand is
  * module state, changed with setBrand(). */
 import {deriveColors, hex, mix} from './colors';
+import {languageOf, setLanguage, tx} from './i18n';
 
 // The default brand when no other is set. A made-up example company: nothing here may come from a real company.
 export const EXAMPLE_BRAND: Brand = {
@@ -24,44 +25,46 @@ let brand: Brand = EXAMPLE_BRAND;
 const SVG_ELEMENTS = ['path', 'circle', 'rect', 'line', 'polyline', 'polygon', 'ellipse', 'g'];
 const SVG_ATTRS = ['d', 'cx', 'cy', 'r', 'rx', 'ry', 'x', 'y', 'x1', 'y1', 'x2', 'y2', 'width', 'height', 'points', 'fill', 'stroke', 'stroke-width',
   'stroke-linecap', 'stroke-linejoin', 'stroke-dasharray', 'fill-rule', 'clip-rule', 'transform', 'opacity', 'fill-opacity', 'stroke-opacity'];
-function unsafeSvg(svg: string): string {
-  if (/javascript:|url\s*\(|&#|\\/i.test(svg)) return 'får inte innehålla url(), javascript: eller teckenkoder';
+function unsafeSvg(svg: string, lang: string): string {
+  if (/javascript:|url\s*\(|&#|\\/i.test(svg)) return tx('svg.urls', {}, lang);
   const withoutTags = svg.replace(/<[^>]*>/g, '');
-  if (/[<>]/.test(withoutTags) || withoutTags.trim()) return 'får bara innehålla SVG-element, ingen text';
+  if (/[<>]/.test(withoutTags) || withoutTags.trim()) return tx('svg.text', {}, lang);
   for (const m of svg.matchAll(/<\s*\/?\s*([^\s/>]+)([^>]*)>/g)) {
     const el = m[1].toLowerCase();
-    if (!SVG_ELEMENTS.includes(el)) return `elementet <${m[1]}> är inte tillåtet (tillåtna: ${SVG_ELEMENTS.join(', ')})`;
+    if (!SVG_ELEMENTS.includes(el)) return tx('svg.element', {element: m[1], allowed: SVG_ELEMENTS.join(', ')}, lang);
     // Every attribute name, also those separated by / instead of a space
     for (const a of m[2].matchAll(/([^\s=/"']+)\s*(=\s*("[^"]*"|'[^']*'|[^\s/>]+))?/g)) {
-      if (!SVG_ATTRS.includes(a[1].toLowerCase())) return `attributet ${a[1]} är inte tillåtet`;
+      if (!SVG_ATTRS.includes(a[1].toLowerCase())) return tx('svg.attribute', {attribute: a[1]}, lang);
     }
   }
   return '';
 }
 
-// Checks a brand (brand.json) and returns the errors in Swedish; an empty list = valid
+// Checks a brand (brand.json) and returns the errors in the brand's own language (brand.json's "language"); an empty list = valid
 export function validateBrand(b: Brand): string[] {
   const e: string[] = [], x = (b || {}) as Partial<Brand>;
-  if (!x.company || !x.company.name) e.push('company.name saknas (företagets namn)');
-  if (!x.colors) e.push('colors saknas');
-  else { try { deriveColors(x.colors); } catch (err) { e.push((err as Error).message); } }
-  if (x.logo && !/^[\w.-]+\.(png|svg|jpe?g|webp)$/i.test(x.logo) && !/^https:\/\/[^\s"'<>]+$/i.test(x.logo)) e.push(`logo måste vara ett filnamn (t.ex. logo.png) eller en https-adress: "${x.logo}"`);
-  if (x.language !== undefined && (typeof x.language !== 'string' || !/^[a-z]{2}$/.test(x.language))) e.push(`language måste vara en språkkod med två små bokstäver, t.ex. "sv": "${String(x.language)}"`);
-  if (!Array.isArray(x.senders) || !x.senders.length) e.push('senders saknas (minst en avsändare)');
-  else x.senders.forEach((s, i) => { if (!s.id) e.push(`senders[${i}].id saknas`); if (!Array.isArray(s.signature)) e.push(`senders[${i}].signature saknas (lista med rader)`); });
-  if (!x.defaultSender) e.push('defaultSender saknas');
-  else if (Array.isArray(x.senders) && !x.senders.some(s => s.id === x.defaultSender)) e.push(`defaultSender "${x.defaultSender}" finns inte bland senders`);
-  if (!Array.isArray(x.customerTypes)) e.push('customerTypes saknas (lista, får vara tom)');
+  const l = languageOf(x.language);
+  const t = (key: Parameters<typeof tx>[0], params: Record<string, string | number> = {}) => tx(key, params, l);
+  if (!x.company || !x.company.name) e.push(t('brand.companyName'));
+  if (!x.colors) e.push(t('brand.colors'));
+  else { try { deriveColors(x.colors, l); } catch (err) { e.push((err as Error).message); } }
+  if (x.logo && !/^[\w.-]+\.(png|svg|jpe?g|webp)$/i.test(x.logo) && !/^https:\/\/[^\s"'<>]+$/i.test(x.logo)) e.push(t('brand.logo', {logo: x.logo}));
+  if (x.language !== undefined && (typeof x.language !== 'string' || !/^[a-z]{2}$/.test(x.language))) e.push(t('brand.language', {value: String(x.language)}));
+  if (!Array.isArray(x.senders) || !x.senders.length) e.push(t('brand.senders'));
+  else x.senders.forEach((s, i) => { if (!s.id) e.push(t('brand.senderId', {i})); if (!Array.isArray(s.signature)) e.push(t('brand.senderSignature', {i})); });
+  if (!x.defaultSender) e.push(t('brand.defaultSender'));
+  else if (Array.isArray(x.senders) && !x.senders.some(s => s.id === x.defaultSender)) e.push(t('brand.defaultSenderUnknown', {id: x.defaultSender}));
+  if (!Array.isArray(x.customerTypes)) e.push(t('brand.types'));
   else {
     const seen = new Set<string>();
-    x.customerTypes.forEach((t, i) => {
-      if (!/^[a-z0-9_-]+$/.test(t.id || '')) e.push(`customerTypes[${i}].id "${t.id}" får bara innehålla a–z, 0–9, - och _`);
-      else if (seen.has(t.id)) e.push(`customerTypes: id "${t.id}" är inte unikt`);
-      seen.add(t.id);
-      if (!t.label) e.push(`customerTypes[${i}].label saknas`);
-      try { hex(t.color, `customerTypes[${i}].color`); if (t.colorDark) hex(t.colorDark, `customerTypes[${i}].colorDark`); } catch (err) { e.push((err as Error).message); }
-      if (t.icon !== undefined && !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(t.icon)) e.push(`customerTypes[${i}].icon "${t.icon}" ska vara ett ikonnamn med a–z, 0–9 och bindestreck, t.ex. kamera eller calendar-days`);
-      const svgErr = t.svg ? unsafeSvg(t.svg) : '';
+    x.customerTypes.forEach((ct, i) => {
+      if (!/^[a-z0-9_-]+$/.test(ct.id || '')) e.push(t('brand.typeId', {i, id: String(ct.id)}));
+      else if (seen.has(ct.id)) e.push(t('brand.typeIdUnique', {id: ct.id}));
+      seen.add(ct.id);
+      if (!ct.label) e.push(t('brand.typeLabel', {i}));
+      try { hex(ct.color, `customerTypes[${i}].color`, l); if (ct.colorDark) hex(ct.colorDark, `customerTypes[${i}].colorDark`, l); } catch (err) { e.push((err as Error).message); }
+      if (ct.icon !== undefined && !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(ct.icon)) e.push(t('brand.typeIcon', {i, icon: ct.icon}));
+      const svgErr = ct.svg ? unsafeSvg(ct.svg, l) : '';
       if (svgErr) e.push(`customerTypes[${i}].svg: ${svgErr}`);
     });
   }
@@ -70,10 +73,11 @@ export function validateBrand(b: Brand): string[] {
 
 // Changes the brand; null gives the example company. A broken brand is refused with an error, and the previous one is kept.
 export const setBrand = (b?: Brand | null): void => {
-  if (!b) { brand = EXAMPLE_BRAND; return; }
+  if (!b) { brand = EXAMPLE_BRAND; setLanguage(undefined); return; }
   const errors = validateBrand(b);
-  if (errors.length) throw new Error('Varumärket är felaktigt: ' + errors.join('; '));
+  if (errors.length) throw new Error(tx('brand.invalid', {errors: errors.join('; ')}, languageOf(b.language)));
   brand = b;
+  setLanguage(b.language);
 };
 export const getBrand = (): Brand => brand;
 // {id: name} for the brand's customer types, in the brand's order
@@ -96,7 +100,7 @@ export function senderFor(c: Customer): Sender {
 // A tip in the customer form about customer types that give another sender than the default
 export const senderHint = (): string => brand.customerTypes.map(t => {
   const s = brand.senders.find(x => x.id === t.sender);
-  return s && s.id !== brand.defaultSender ? `${t.label} ger avsändaren ${s.company || s.name || s.id} i mailsignaturen.` : '';
+  return s && s.id !== brand.defaultSender ? tx('senderHint', {label: t.label, sender: s.company || s.name || s.id}) : '';
 }).filter(Boolean).join(' ');
 
 // Fonts: the names end up in CSS and in an address, so only letters, digits, spaces and - get through; "system-ui" = none of its own
@@ -111,7 +115,7 @@ export const googleFontsUrl = (f: CleanFonts): string => {
 };
 // A light and a dark colour per customer type; the dark one is worked out if it is not given
 export const typeColors = (): Record<string, {light: string; dark: string}> =>
-  Object.fromEntries(brand.customerTypes.map(t => [t.id, {light: hex(t.color, `kundtyp ${t.id}`), dark: t.colorDark ? hex(t.colorDark, `kundtyp ${t.id}`) : mix(t.color, '#ffffff', 0.35)}]));
+  Object.fromEntries(brand.customerTypes.map(t => [t.id, {light: hex(t.color, tx('color.typeField', {id: t.id})), dark: t.colorDark ? hex(t.colorDark, tx('color.typeField', {id: t.id})) : mix(t.color, '#ffffff', 0.35)}]));
 
 // A customer type's icon: the brand's own svg, otherwise a name from the app's own set (the old names), otherwise a
 // lucide name; without an icon it is a dot. Whether a lucide name exists is decided by the app, which has the icons.

@@ -1,6 +1,7 @@
 /* Customers' events: upcoming, open (no offer sent yet), hidden and ended ones to follow up, and what else is booked
  * during an event. */
-import {BOOKING_KINDS} from './bookings';
+import {bookingTitle} from './bookings';
+import {tx} from './i18n';
 import {daysSince, daysUntil, todayISO} from './time';
 
 const SOON_DAYS = 14, EVENT_FOLLOWUP_WINDOW = 30;
@@ -40,16 +41,16 @@ export function eventConflicts(e: CustomerEvent, customers?: Customer[] | null, 
   // Without a date the comparison is against undefined, exactly as in the original JavaScript code
   const from = e.date!, to = eventEnd(e)!, out: Conflict[] = [], seenGcal = new Set<string>();
   for (const c of customers||[]) {
-    const who = c.company || c.name || 'Namnlös';
+    const who = c.company || c.name || tx('unnamed');
     for (const b of c.bookings||[]) {
       if (!b.date || b.date < from || b.date > to) continue;
       if (b.gcalEventId && b.source === 'gcal') seenGcal.add(b.gcalEventId);
-      out.push({date:b.date, time:b.time || '', title:`${BOOKING_KINDS[b.kind as string] || 'Möte'}: ${who}${b.title ? ' – ' + b.title : ''}`, source:'bokning', customerId:c.id});
+      out.push({date:b.date, time:b.time || '', title:bookingTitle(b, who), source:'bokning', customerId:c.id});
     }
   }
   for (const x of busy||[]) {
     if (!x.date || x.date < from || x.date > to || (x.eventId && seenGcal.has(x.eventId))) continue;
-    out.push({date:x.date, time:x.time || '', title:x.title || 'Upptagen', source:'kalender'});
+    out.push({date:x.date, time:x.time || '', title:x.title || tx('busy'), source:'kalender'});
   }
   return out.sort((a,b) => (a.date + a.time).localeCompare(b.date + b.time));
 }

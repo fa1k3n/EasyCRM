@@ -1,6 +1,6 @@
 'use strict';
 /* Type-checks and builds TypeScript with the typescript package from npm.
- * Default: the logic, kundregister/logic/*.ts -> kundregister/logic.js. A tsconfig.json with "crmBundle"
+ * Default: the logic, crm/logic/*.ts -> crm/logic.js. A tsconfig.json with "crmBundle"
  * ({entry, out, name}) is type-checked by TypeScript and then bundled by Vite into one UMD script (window.<name>).
  * With --project another folder with a tsconfig.json is built (e.g. a private mail plugin).
  * Usage: node tools/build.js [--project <folder with tsconfig.json>]   (npm run build [-- --project <folder>])
@@ -10,7 +10,7 @@ const path = require('path');
 const ts = require('typescript');
 
 const ROOT = path.resolve(__dirname, '..');
-const DEFAULT_PROJECT = path.join(ROOT, 'kundregister');
+const DEFAULT_PROJECT = path.join(ROOT, 'crm');
 
 function parseArgs(argv) {
   const i = argv.indexOf('--project');

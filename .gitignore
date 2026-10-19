@@ -1,4 +1,4 @@
-# Nycklar och hemligheter ska aldrig in i git (lägg dem i miljövariabler)
+# Keys and secrets never go into git (put them in environment variables)
 .env
 .env.*
 *.key
@@ -9,32 +9,32 @@
 id_rsa*
 id_ed25519*
 
-# Exporter och säkerhetskopior av kunddata
+# Exports and backups of customer data
 backup/
 *.json
-# JSON som ska med trots regeln ovan: npm-projektet, TypeScript-inställningarna och exemplet på varumärke
+# JSON that is included despite the rule above: the npm project, the TypeScript settings and the example brand
 !package.json
 !package-lock.json
-!kundregister/tsconfig.json
+!crm/tsconfig.json
 !app/tsconfig.json
-!exempel/brand.json
+!example/brand.json
 
-# Ditt företags varumärke (brand.json, bilder, tillägg i extensions/) och publiceringsmappen i den: sparas aldrig i git.
-# Skapa med  cp -r exempel profile  och säkerhetskopiera den själv.
+# Your company's brand (brand.json, images, extensions in extensions/) and its publish folder: never saved in git.
+# Create it with  cp -r example profile  and back it up yourself.
 profile/
 
-# Lokal markering som visar att mappen skrivs av en export; följer aldrig med till git
+# Local marker showing that the folder is written by an export; never goes into git
 .crm-platform
 
-# Publiceringsmappar som tools/deploy.js skriver (standard: <varumärkesmappen>\publicera)
-publicera/
+# Publish folders that tools/deploy.js writes (default: <brand folder>/publish)
+publish/
 
-# npm-paketen installeras med  npm ci  och sparas aldrig i git
+# The npm packages are installed with  npm ci  and never saved in git
 node_modules/
-# React-appens bygge (npm run build skapar den)
+# The React app's build (npm run build creates it)
 app/dist/
 
-# Tillfälliga filer
+# Temporary files
 *.tmp
 Thumbs.db
 desktop.ini

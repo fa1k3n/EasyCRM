@@ -2,20 +2,165 @@
 (function(global, factory) {
 	typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define([], factory) : (global = typeof globalThis !== "undefined" ? globalThis : global || self, global.CRMLogic = factory());
 })(this, function() {
-	var MONTHS = [
-		"januari",
-		"februari",
-		"mars",
-		"april",
-		"maj",
-		"juni",
-		"juli",
-		"augusti",
-		"september",
-		"oktober",
-		"november",
-		"december"
-	];
+	var sv = {
+		"kind.mail_ut": "Mail skickat",
+		"kind.mail_in": "Mail mottaget",
+		"kind.samtal": "Samtal",
+		"kind.mote": "Möte",
+		"kind.ovrigt": "Övrigt",
+		"inv.published": "Skickad",
+		"inv.paid": "Betald",
+		"inv.overPaid": "Överbetald",
+		"inv.underPaid": "Delbetald",
+		"inv.overdue": "Förfallen",
+		"inv.credited": "Krediterad",
+		"inv.credit": "Kreditnota",
+		"booking.jobb": "Jobb",
+		"booking.mote": "Möte",
+		"booking.samtal": "Samtal",
+		neverContacted: "Ej kontaktad",
+		today: "Idag",
+		daysAgo: "{days} d sedan",
+		months: "januari,februari,mars,april,maj,juni,juli,augusti,september,oktober,november,december",
+		unnamed: "Namnlös",
+		busy: "Upptagen",
+		source: "Källa",
+		"cal.booking": "{kind}: {who}",
+		"cal.bookingTitle": "{kind}: {who} – {title}",
+		"cal.followUp": "Följ upp: {who}",
+		"cal.deadline": "{days} dagar utan kontakt: {who}",
+		"cal.eventFollowUp": "Följ upp event: {who} – {title}",
+		"cal.invoice": "Förfaller: faktura #{number} {who}",
+		"cal.invoiceAmount": " ({amount} kr)",
+		"mail.offerSubject": "Erbjudande inför {title}",
+		"mail.offerNote": "Erbjudande inför {title} ({when}) loggat som skickat.",
+		"mail.followUpSubject": "Uppföljning efter {title}",
+		"mail.followUpNote": "Uppföljning efter {title} ({when}) loggad som skickad.",
+		"mail.theEvent": "eventet",
+		"mail.draftSent": "Mail skickat från utkast",
+		"mail.notObject": "mailtillägget saknas eller är inte ett objekt",
+		"mail.missingFunction": "mailtillägget saknar funktionen {name}",
+		"mail.noAnswer": "mailtillägget gav inget svar",
+		"mail.noText": "mailtillägget gav ingen text i {field}",
+		senderHint: "{label} ger avsändaren {sender} i mailsignaturen.",
+		"brand.invalid": "Varumärket är felaktigt: {errors}",
+		"brand.companyName": "company.name saknas (företagets namn)",
+		"brand.colors": "colors saknas",
+		"brand.logo": "logo måste vara ett filnamn (t.ex. logo.png) eller en https-adress: \"{logo}\"",
+		"brand.language": "language måste vara en språkkod med två små bokstäver, t.ex. \"sv\": \"{value}\"",
+		"brand.senders": "senders saknas (minst en avsändare)",
+		"brand.senderId": "senders[{i}].id saknas",
+		"brand.senderSignature": "senders[{i}].signature saknas (lista med rader)",
+		"brand.defaultSender": "defaultSender saknas",
+		"brand.defaultSenderUnknown": "defaultSender \"{id}\" finns inte bland senders",
+		"brand.types": "customerTypes saknas (lista, får vara tom)",
+		"brand.typeId": "customerTypes[{i}].id \"{id}\" får bara innehålla a–z, 0–9, - och _",
+		"brand.typeIdUnique": "customerTypes: id \"{id}\" är inte unikt",
+		"brand.typeLabel": "customerTypes[{i}].label saknas",
+		"brand.typeIcon": "customerTypes[{i}].icon \"{icon}\" ska vara ett ikonnamn med a–z, 0–9 och bindestreck, t.ex. kamera eller calendar-days",
+		"svg.urls": "får inte innehålla url(), javascript: eller teckenkoder",
+		"svg.text": "får bara innehålla SVG-element, ingen text",
+		"svg.element": "elementet <{element}> är inte tillåtet (tillåtna: {allowed})",
+		"svg.attribute": "attributet {attribute} är inte tillåtet",
+		"color.invalid": "Ogiltig färg i {field}: \"{value}\" (ange #rrggbb)",
+		"color.field": "färg",
+		"color.typeField": "kundtyp {id}",
+		"color.ink": "huvudtexten (ink)",
+		"color.text": "brödtexten (text)",
+		"color.muted": "den dämpade texten (muted)",
+		"color.accentInk": "texten på accentfärgen (accent-ink)",
+		"color.light": "ljust läge",
+		"color.dark": "mörkt läge",
+		"color.onBg": "bakgrunden",
+		"color.onAccent": "accentfärgen",
+		"color.lowContrast": "{mode}: {label} har för låg kontrast mot {against} ({ratio}:1, minst {min}:1)"
+	};
+	var TEXTS = {
+		sv,
+		en: {
+			"kind.mail_ut": "Mail sent",
+			"kind.mail_in": "Mail received",
+			"kind.samtal": "Call",
+			"kind.mote": "Meeting",
+			"kind.ovrigt": "Other",
+			"inv.published": "Sent",
+			"inv.paid": "Paid",
+			"inv.overPaid": "Overpaid",
+			"inv.underPaid": "Partly paid",
+			"inv.overdue": "Overdue",
+			"inv.credited": "Credited",
+			"inv.credit": "Credit note",
+			"booking.jobb": "Job",
+			"booking.mote": "Meeting",
+			"booking.samtal": "Call",
+			neverContacted: "Not contacted",
+			today: "Today",
+			daysAgo: "{days} d ago",
+			months: "January,February,March,April,May,June,July,August,September,October,November,December",
+			unnamed: "Unnamed",
+			busy: "Busy",
+			source: "Source",
+			"cal.booking": "{kind}: {who}",
+			"cal.bookingTitle": "{kind}: {who} – {title}",
+			"cal.followUp": "Follow up: {who}",
+			"cal.deadline": "{days} days without contact: {who}",
+			"cal.eventFollowUp": "Follow up event: {who} – {title}",
+			"cal.invoice": "Due: invoice #{number} {who}",
+			"cal.invoiceAmount": " ({amount} SEK)",
+			"mail.offerSubject": "Offer before {title}",
+			"mail.offerNote": "Offer before {title} ({when}) logged as sent.",
+			"mail.followUpSubject": "Follow-up after {title}",
+			"mail.followUpNote": "Follow-up after {title} ({when}) logged as sent.",
+			"mail.theEvent": "the event",
+			"mail.draftSent": "Mail sent from a draft",
+			"mail.notObject": "the mail extension is missing or is not an object",
+			"mail.missingFunction": "the mail extension lacks the function {name}",
+			"mail.noAnswer": "the mail extension gave no answer",
+			"mail.noText": "the mail extension gave no text in {field}",
+			senderHint: "{label} gives the sender {sender} in the mail signature.",
+			"brand.invalid": "The brand is invalid: {errors}",
+			"brand.companyName": "company.name is missing (the company name)",
+			"brand.colors": "colors is missing",
+			"brand.logo": "logo must be a file name (e.g. logo.png) or an https address: \"{logo}\"",
+			"brand.language": "language must be a language code of two lower-case letters, e.g. \"en\": \"{value}\"",
+			"brand.senders": "senders is missing (at least one sender)",
+			"brand.senderId": "senders[{i}].id is missing",
+			"brand.senderSignature": "senders[{i}].signature is missing (a list of lines)",
+			"brand.defaultSender": "defaultSender is missing",
+			"brand.defaultSenderUnknown": "defaultSender \"{id}\" is not among senders",
+			"brand.types": "customerTypes is missing (a list, may be empty)",
+			"brand.typeId": "customerTypes[{i}].id \"{id}\" may only contain a–z, 0–9, - and _",
+			"brand.typeIdUnique": "customerTypes: id \"{id}\" is not unique",
+			"brand.typeLabel": "customerTypes[{i}].label is missing",
+			"brand.typeIcon": "customerTypes[{i}].icon \"{icon}\" should be an icon name with a–z, 0–9 and hyphens, e.g. kamera or calendar-days",
+			"svg.urls": "may not contain url(), javascript: or character references",
+			"svg.text": "may only contain SVG elements, no text",
+			"svg.element": "the element <{element}> is not allowed (allowed: {allowed})",
+			"svg.attribute": "the attribute {attribute} is not allowed",
+			"color.invalid": "Invalid colour in {field}: \"{value}\" (use #rrggbb)",
+			"color.field": "colour",
+			"color.typeField": "customer type {id}",
+			"color.ink": "the main text (ink)",
+			"color.text": "the body text (text)",
+			"color.muted": "the muted text (muted)",
+			"color.accentInk": "the text on the accent colour (accent-ink)",
+			"color.light": "light mode",
+			"color.dark": "dark mode",
+			"color.onBg": "the background",
+			"color.onAccent": "the accent colour",
+			"color.lowContrast": "{mode}: {label} has too low contrast against {against} ({ratio}:1, at least {min}:1)"
+		}
+	};
+	var DEFAULT = "sv";
+	var current = DEFAULT;
+	var languageOf = (lang) => typeof lang === "string" && TEXTS[lang] ? lang : DEFAULT;
+	var setLanguage = (lang) => {
+		current = languageOf(lang);
+	};
+	var language = () => current;
+	function tx(key, params = {}, lang = current) {
+		return ((TEXTS[lang] || sv)[key] ?? sv[key]).replace(/\{(\w+)\}/g, (m, k) => k in params ? String(params[k]) : m);
+	}
 	var clock = () => /* @__PURE__ */ new Date();
 	var setClock = (fn) => {
 		clock = fn || (() => /* @__PURE__ */ new Date());
@@ -36,30 +181,31 @@
 	};
 	var dayMonth = (iso) => {
 		const [, m, d] = iso.split("-");
-		return `${+d} ${MONTHS[+m - 1]}`;
+		return `${+d} ${tx("months").split(",")[+m - 1]}`;
 	};
 	var addDays = (iso, n) => {
 		const d = /* @__PURE__ */ new Date(iso + "T12:00:00");
 		d.setDate(d.getDate() + n);
 		return toISO(d);
 	};
-	var KINDS = {
-		mail_ut: "Mail skickat",
-		mail_in: "Mail mottaget",
-		samtal: "Samtal",
-		mote: "Möte",
-		ovrigt: "Övrigt"
-	};
+	var labels = (prefix, ids) => Object.fromEntries(ids.map((id) => [id, tx(`${prefix}.${id}`)]));
+	var kinds = () => labels("kind", [
+		"mail_ut",
+		"mail_in",
+		"samtal",
+		"mote",
+		"ovrigt"
+	]);
 	var WARN = 60;
-	var INV_STATUS = {
-		published: "Skickad",
-		paid: "Betald",
-		overPaid: "Överbetald",
-		underPaid: "Delbetald",
-		overdue: "Förfallen",
-		credited: "Krediterad",
-		credit: "Kreditnota"
-	};
+	var invoiceStatuses = () => labels("inv", [
+		"published",
+		"paid",
+		"overPaid",
+		"underPaid",
+		"overdue",
+		"credited",
+		"credit"
+	]);
 	function lastTouch(c) {
 		let d = null;
 		const t = todayISO();
@@ -91,9 +237,9 @@
 		return best;
 	}
 	function daysLabel(st) {
-		if (st.level === "never") return "Ej kontaktad";
-		if (st.days === 0) return "Idag";
-		return st.days + " d sedan";
+		if (st.level === "never") return tx("neverContacted");
+		if (st.days === 0) return tx("today");
+		return tx("daysAgo", { days: st.days });
 	}
 	var contactScore = (c) => {
 		const s = status(c);
@@ -141,14 +287,14 @@
 	function eventConflicts(e, customers, busy) {
 		const from = e.date, to = eventEnd(e), out = [], seenGcal = /* @__PURE__ */ new Set();
 		for (const c of customers || []) {
-			const who = c.company || c.name || "Namnlös";
+			const who = c.company || c.name || tx("unnamed");
 			for (const b of c.bookings || []) {
 				if (!b.date || b.date < from || b.date > to) continue;
 				if (b.gcalEventId && b.source === "gcal") seenGcal.add(b.gcalEventId);
 				out.push({
 					date: b.date,
 					time: b.time || "",
-					title: `${BOOKING_KINDS[b.kind] || "Möte"}: ${who}${b.title ? " – " + b.title : ""}`,
+					title: bookingTitle(b, who),
 					source: "bokning",
 					customerId: c.id
 				});
@@ -159,7 +305,7 @@
 			out.push({
 				date: x.date,
 				time: x.time || "",
-				title: x.title || "Upptagen",
+				title: x.title || tx("busy"),
 				source: "kalender"
 			});
 		}
@@ -170,11 +316,17 @@
 		...e,
 		dismissed
 	} : e) });
-	var BOOKING_KINDS = {
-		jobb: "Jobb",
-		mote: "Möte",
-		samtal: "Samtal"
-	};
+	var KIND_IDS = [
+		"jobb",
+		"mote",
+		"samtal"
+	];
+	var bookingKinds = () => Object.fromEntries(KIND_IDS.map((k) => [k, tx(`booking.${k}`)]));
+	var bookingTitle = (b, who) => tx(b.title ? "cal.bookingTitle" : "cal.booking", {
+		kind: bookingKinds()[b.kind] || tx("booking.mote"),
+		who,
+		title: b.title || ""
+	});
 	var bookingSortKey = (b) => (b.date || "") + " " + (b.time || "");
 	var upcomingBookings = (c) => (c.bookings || []).filter((b) => b.date && b.date >= todayISO()).sort((a, b) => bookingSortKey(a).localeCompare(bookingSortKey(b)));
 	var nextBooking = (c) => upcomingBookings(c)[0] || null;
@@ -192,14 +344,14 @@
 		const items = [];
 		for (const c of customers) {
 			if (c.example) continue;
-			const who = c.company || c.name || "Namnlös";
+			const who = c.company || c.name || tx("unnamed");
 			for (const b of c.bookings || []) {
 				if (!b.date || b.date < from || b.source === "gcal") continue;
 				items.push({
 					key: `booking:${c.id}:${b.id}`,
 					kind: "booking",
 					customerId: c.id,
-					title: `${BOOKING_KINDS[b.kind] || "Möte"}: ${who}${b.title ? " – " + b.title : ""}`,
+					title: bookingTitle(b, who),
 					date: b.date,
 					time: b.time || null,
 					allDay: !b.time,
@@ -211,7 +363,7 @@
 				key: `followup:${c.id}`,
 				kind: "followup",
 				customerId: c.id,
-				title: `Följ upp: ${who}`,
+				title: tx("cal.followUp", { who }),
 				date: c.followUp.date,
 				allDay: true,
 				note: c.followUp.note || ""
@@ -221,7 +373,10 @@
 				key: `deadline:${c.id}`,
 				kind: "deadline",
 				customerId: c.id,
-				title: `90 dagar utan kontakt: ${who}`,
+				title: tx("cal.deadline", {
+					days: 90,
+					who
+				}),
 				date: deadline,
 				allDay: true
 			});
@@ -233,7 +388,10 @@
 					key: `eventfu:${c.id}:${e.id}`,
 					kind: "eventfu",
 					customerId: c.id,
-					title: `Följ upp event: ${who} – ${e.title}`,
+					title: tx("cal.eventFollowUp", {
+						who,
+						title: e.title || ""
+					}),
 					date,
 					allDay: true
 				});
@@ -244,7 +402,10 @@
 					key: `invoice:${c.id}:${j.id}`,
 					kind: "invoice",
 					customerId: c.id,
-					title: `Förfaller: faktura #${j.invoiceNumber} ${who}${j.amount ? ` (${j.amount} kr)` : ""}`,
+					title: tx("cal.invoice", {
+						number: j.invoiceNumber || "",
+						who
+					}) + (j.amount ? tx("cal.invoiceAmount", { amount: j.amount }) : ""),
 					date: j.dueDate,
 					allDay: true
 				});
@@ -252,9 +413,12 @@
 		}
 		return items.sort((a, b) => a.date.localeCompare(b.date) || a.key.localeCompare(b.key));
 	}
-	function rgb(c, field) {
+	function rgb(c, field, lang = language()) {
 		const m = /^#([0-9a-f]{6})$/i.exec(String(c || "").trim());
-		if (!m) throw new Error(`Ogiltig färg i ${field}: "${c}" (ange #rrggbb)`);
+		if (!m) throw new Error(tx("color.invalid", {
+			field,
+			value: String(c)
+		}, lang));
 		const n = parseInt(m[1], 16);
 		return [
 			n >> 16 & 255,
@@ -262,13 +426,13 @@
 			n & 255
 		];
 	}
-	var hex = (c, field) => "#" + rgb(c, field).map((v) => v.toString(16).padStart(2, "0")).join("");
+	var hex = (c, field, lang) => "#" + rgb(c, field, lang).map((v) => v.toString(16).padStart(2, "0")).join("");
 	var mix = (a, b, t) => {
-		const x = rgb(a, "färg"), y = rgb(b, "färg");
+		const x = rgb(a, tx("color.field")), y = rgb(b, tx("color.field"));
 		return "#" + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, "0")).join("");
 	};
 	var luminance = (c) => {
-		const [r, g, b] = rgb(c, "färg").map((v) => {
+		const [r, g, b] = rgb(c, tx("color.field")).map((v) => {
 			const s = v / 255;
 			return s <= .03928 ? s / 12.92 : Math.pow((s + .055) / 1.055, 2.4);
 		});
@@ -280,9 +444,9 @@
 	};
 	var bestOn = (bg, options) => options.reduce((best, o) => contrastRatio(o, bg) > contrastRatio(best, bg) ? o : best);
 	var MIN_TEXT = 4.5;
-	function deriveColors(colors) {
-		const accent = hex(colors.accent, "colors.accent"), ink = hex(colors.ink, "colors.ink"), bg = hex(colors.bg, "colors.bg");
-		const hover = colors.accentHover ? hex(colors.accentHover, "colors.accentHover") : mix(accent, "#000000", .16);
+	function deriveColors(colors, lang = language()) {
+		const accent = hex(colors.accent, "colors.accent", lang), ink = hex(colors.ink, "colors.ink", lang), bg = hex(colors.bg, "colors.bg", lang);
+		const hover = colors.accentHover ? hex(colors.accentHover, "colors.accentHover", lang) : mix(accent, "#000000", .16);
 		const [ir, ig, ib] = rgb(ink, "colors.ink");
 		const light = {
 			bg,
@@ -319,34 +483,40 @@
 		};
 		for (const [mode, target] of [["light", light], ["dark", dark]]) {
 			const o = (colors.overrides || {})[mode] || {};
-			for (const k of Object.keys(o)) target[k] = k === "shadow" ? o[k] : hex(o[k], `colors.overrides.${mode}.${k}`);
+			for (const k of Object.keys(o)) target[k] = k === "shadow" ? o[k] : hex(o[k], `colors.overrides.${mode}.${k}`, lang);
 		}
 		const warnings = [];
 		const checks = [
 			[
-				"huvudtexten (ink)",
+				"color.ink",
 				"ink",
 				"bg"
 			],
 			[
-				"brödtexten (text)",
+				"color.text",
 				"text",
 				"bg"
 			],
 			[
-				"den dämpade texten (muted)",
+				"color.muted",
 				"muted",
 				"bg"
 			],
 			[
-				"texten på accentfärgen (accent-ink)",
+				"color.accentInk",
 				"accent-ink",
 				"accent"
 			]
 		];
-		for (const [name, p] of [["ljust läge", light], ["mörkt läge", dark]]) for (const [label, fg, back] of checks) {
+		for (const [name, p] of [["color.light", light], ["color.dark", dark]]) for (const [label, fg, back] of checks) {
 			const c = contrastRatio(p[fg], p[back]);
-			if (c < MIN_TEXT) warnings.push(`${name}: ${label} har för låg kontrast mot ${back === "bg" ? "bakgrunden" : "accentfärgen"} (${c.toFixed(1)}:1, minst ${MIN_TEXT}:1)`);
+			if (c < MIN_TEXT) warnings.push(tx("color.lowContrast", {
+				mode: tx(name, {}, lang),
+				label: tx(label, {}, lang),
+				against: tx(back === "bg" ? "color.onBg" : "color.onAccent", {}, lang),
+				ratio: c.toFixed(1),
+				min: MIN_TEXT
+			}, lang));
 		}
 		return {
 			light,
@@ -440,51 +610,62 @@
 		"fill-opacity",
 		"stroke-opacity"
 	];
-	function unsafeSvg(svg) {
-		if (/javascript:|url\s*\(|&#|\\/i.test(svg)) return "får inte innehålla url(), javascript: eller teckenkoder";
+	function unsafeSvg(svg, lang) {
+		if (/javascript:|url\s*\(|&#|\\/i.test(svg)) return tx("svg.urls", {}, lang);
 		const withoutTags = svg.replace(/<[^>]*>/g, "");
-		if (/[<>]/.test(withoutTags) || withoutTags.trim()) return "får bara innehålla SVG-element, ingen text";
+		if (/[<>]/.test(withoutTags) || withoutTags.trim()) return tx("svg.text", {}, lang);
 		for (const m of svg.matchAll(/<\s*\/?\s*([^\s/>]+)([^>]*)>/g)) {
 			const el = m[1].toLowerCase();
-			if (!SVG_ELEMENTS.includes(el)) return `elementet <${m[1]}> är inte tillåtet (tillåtna: ${SVG_ELEMENTS.join(", ")})`;
-			for (const a of m[2].matchAll(/([^\s=/"']+)\s*(=\s*("[^"]*"|'[^']*'|[^\s/>]+))?/g)) if (!SVG_ATTRS.includes(a[1].toLowerCase())) return `attributet ${a[1]} är inte tillåtet`;
+			if (!SVG_ELEMENTS.includes(el)) return tx("svg.element", {
+				element: m[1],
+				allowed: SVG_ELEMENTS.join(", ")
+			}, lang);
+			for (const a of m[2].matchAll(/([^\s=/"']+)\s*(=\s*("[^"]*"|'[^']*'|[^\s/>]+))?/g)) if (!SVG_ATTRS.includes(a[1].toLowerCase())) return tx("svg.attribute", { attribute: a[1] }, lang);
 		}
 		return "";
 	}
 	function validateBrand(b) {
 		const e = [], x = b || {};
-		if (!x.company || !x.company.name) e.push("company.name saknas (företagets namn)");
-		if (!x.colors) e.push("colors saknas");
+		const l = languageOf(x.language);
+		const t = (key, params = {}) => tx(key, params, l);
+		if (!x.company || !x.company.name) e.push(t("brand.companyName"));
+		if (!x.colors) e.push(t("brand.colors"));
 		else try {
-			deriveColors(x.colors);
+			deriveColors(x.colors, l);
 		} catch (err) {
 			e.push(err.message);
 		}
-		if (x.logo && !/^[\w.-]+\.(png|svg|jpe?g|webp)$/i.test(x.logo) && !/^https:\/\/[^\s"'<>]+$/i.test(x.logo)) e.push(`logo måste vara ett filnamn (t.ex. logo.png) eller en https-adress: "${x.logo}"`);
-		if (x.language !== void 0 && (typeof x.language !== "string" || !/^[a-z]{2}$/.test(x.language))) e.push(`language måste vara en språkkod med två små bokstäver, t.ex. "sv": "${String(x.language)}"`);
-		if (!Array.isArray(x.senders) || !x.senders.length) e.push("senders saknas (minst en avsändare)");
+		if (x.logo && !/^[\w.-]+\.(png|svg|jpe?g|webp)$/i.test(x.logo) && !/^https:\/\/[^\s"'<>]+$/i.test(x.logo)) e.push(t("brand.logo", { logo: x.logo }));
+		if (x.language !== void 0 && (typeof x.language !== "string" || !/^[a-z]{2}$/.test(x.language))) e.push(t("brand.language", { value: String(x.language) }));
+		if (!Array.isArray(x.senders) || !x.senders.length) e.push(t("brand.senders"));
 		else x.senders.forEach((s, i) => {
-			if (!s.id) e.push(`senders[${i}].id saknas`);
-			if (!Array.isArray(s.signature)) e.push(`senders[${i}].signature saknas (lista med rader)`);
+			if (!s.id) e.push(t("brand.senderId", { i }));
+			if (!Array.isArray(s.signature)) e.push(t("brand.senderSignature", { i }));
 		});
-		if (!x.defaultSender) e.push("defaultSender saknas");
-		else if (Array.isArray(x.senders) && !x.senders.some((s) => s.id === x.defaultSender)) e.push(`defaultSender "${x.defaultSender}" finns inte bland senders`);
-		if (!Array.isArray(x.customerTypes)) e.push("customerTypes saknas (lista, får vara tom)");
+		if (!x.defaultSender) e.push(t("brand.defaultSender"));
+		else if (Array.isArray(x.senders) && !x.senders.some((s) => s.id === x.defaultSender)) e.push(t("brand.defaultSenderUnknown", { id: x.defaultSender }));
+		if (!Array.isArray(x.customerTypes)) e.push(t("brand.types"));
 		else {
 			const seen = /* @__PURE__ */ new Set();
-			x.customerTypes.forEach((t, i) => {
-				if (!/^[a-z0-9_-]+$/.test(t.id || "")) e.push(`customerTypes[${i}].id "${t.id}" får bara innehålla a–z, 0–9, - och _`);
-				else if (seen.has(t.id)) e.push(`customerTypes: id "${t.id}" är inte unikt`);
-				seen.add(t.id);
-				if (!t.label) e.push(`customerTypes[${i}].label saknas`);
+			x.customerTypes.forEach((ct, i) => {
+				if (!/^[a-z0-9_-]+$/.test(ct.id || "")) e.push(t("brand.typeId", {
+					i,
+					id: String(ct.id)
+				}));
+				else if (seen.has(ct.id)) e.push(t("brand.typeIdUnique", { id: ct.id }));
+				seen.add(ct.id);
+				if (!ct.label) e.push(t("brand.typeLabel", { i }));
 				try {
-					hex(t.color, `customerTypes[${i}].color`);
-					if (t.colorDark) hex(t.colorDark, `customerTypes[${i}].colorDark`);
+					hex(ct.color, `customerTypes[${i}].color`, l);
+					if (ct.colorDark) hex(ct.colorDark, `customerTypes[${i}].colorDark`, l);
 				} catch (err) {
 					e.push(err.message);
 				}
-				if (t.icon !== void 0 && !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(t.icon)) e.push(`customerTypes[${i}].icon "${t.icon}" ska vara ett ikonnamn med a–z, 0–9 och bindestreck, t.ex. kamera eller calendar-days`);
-				const svgErr = t.svg ? unsafeSvg(t.svg) : "";
+				if (ct.icon !== void 0 && !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(ct.icon)) e.push(t("brand.typeIcon", {
+					i,
+					icon: ct.icon
+				}));
+				const svgErr = ct.svg ? unsafeSvg(ct.svg, l) : "";
 				if (svgErr) e.push(`customerTypes[${i}].svg: ${svgErr}`);
 			});
 		}
@@ -493,11 +674,13 @@
 	var setBrand = (b) => {
 		if (!b) {
 			brand = EXAMPLE_BRAND;
+			setLanguage(void 0);
 			return;
 		}
 		const errors = validateBrand(b);
-		if (errors.length) throw new Error("Varumärket är felaktigt: " + errors.join("; "));
+		if (errors.length) throw new Error(tx("brand.invalid", { errors: errors.join("; ") }, languageOf(b.language)));
 		brand = b;
+		setLanguage(b.language);
 	};
 	var getBrand = () => brand;
 	var serviceTypes = () => Object.fromEntries(brand.customerTypes.map((t) => [t.id, t.label]));
@@ -515,7 +698,10 @@
 	}
 	var senderHint = () => brand.customerTypes.map((t) => {
 		const s = brand.senders.find((x) => x.id === t.sender);
-		return s && s.id !== brand.defaultSender ? `${t.label} ger avsändaren ${s.company || s.name || s.id} i mailsignaturen.` : "";
+		return s && s.id !== brand.defaultSender ? tx("senderHint", {
+			label: t.label,
+			sender: s.company || s.name || s.id
+		}) : "";
 	}).filter(Boolean).join(" ");
 	var brandFonts = (f = {}) => {
 		const clean = (n) => n && !/^system-ui$/i.test(n) ? String(n).replace(/[^\w\s-]/g, "") : "";
@@ -530,8 +716,8 @@
 		return f.google && families.length ? "https://fonts.googleapis.com/css2?" + families.map((n) => "family=" + encodeURIComponent(n).replace(/%20/g, "+") + ":wght@400;500;600;700").join("&") + "&display=swap" : "";
 	};
 	var typeColors = () => Object.fromEntries(brand.customerTypes.map((t) => [t.id, {
-		light: hex(t.color, `kundtyp ${t.id}`),
-		dark: t.colorDark ? hex(t.colorDark, `kundtyp ${t.id}`) : mix(t.color, "#ffffff", .35)
+		light: hex(t.color, tx("color.typeField", { id: t.id })),
+		dark: t.colorDark ? hex(t.colorDark, tx("color.typeField", { id: t.id })) : mix(t.color, "#ffffff", .35)
 	}]));
 	var OWN_ICONS = [
 		"person",
@@ -637,7 +823,7 @@
 		try {
 			return new URL(u).hostname.replace(/^www\./, "");
 		} catch {
-			return "Källa";
+			return tx("source");
 		}
 	};
 	var SEGMENTS = [
@@ -680,14 +866,14 @@
 	}
 	var signature = (c) => senderFor(c).signature.join("\n");
 	function checkMailModule(m) {
-		if (!m || typeof m !== "object") return ["mailtillägget saknas eller är inte ett objekt"];
+		if (!m || typeof m !== "object") return [tx("mail.notObject")];
 		const mod = m;
-		return ["buildOffer", "buildEventFollowUp"].filter((k) => typeof mod[k] !== "function").map((k) => `mailtillägget saknar funktionen ${k}`);
+		return ["buildOffer", "buildEventFollowUp"].filter((k) => typeof mod[k] !== "function").map((k) => tx("mail.missingFunction", { name: k }));
 	}
 	function normalizeMailText(o) {
-		if (!o || typeof o !== "object") throw new Error("mailtillägget gav inget svar");
+		if (!o || typeof o !== "object") throw new Error(tx("mail.noAnswer"));
 		const r = o;
-		for (const f of ["subject", "body"]) if (typeof r[f] !== "string" || !r[f].trim()) throw new Error(`mailtillägget gav ingen text i ${f}`);
+		for (const f of ["subject", "body"]) if (typeof r[f] !== "string" || !r[f].trim()) throw new Error(tx("mail.noText", { field: f }));
 		return {
 			subject: String(r.subject),
 			body: String(r.body),
@@ -722,7 +908,7 @@
 			kind: "mail_ut",
 			date: todayISO(),
 			subject: d.subject || "",
-			note: d.summary || "Mail skickat från utkast",
+			note: d.summary || tx("mail.draftSent"),
 			body: d.body || ""
 		};
 		const comms = [...c.comms || [], m];
@@ -748,19 +934,23 @@
 		return patch;
 	}
 	function logOnlyEntry(e, kind) {
-		const title = String(e.title || "").trim() || "eventet", when = fmtDate(e.date);
+		const title = String(e.title || "").trim() || tx("mail.theEvent"), when = fmtDate(e.date);
 		return kind === "eventfu" ? {
-			subject: `Uppföljning efter ${title}`,
-			note: `Uppföljning efter ${title} (${when}) loggad som skickad.`
+			subject: tx("mail.followUpSubject", { title }),
+			note: tx("mail.followUpNote", {
+				title,
+				when
+			})
 		} : {
-			subject: `Erbjudande inför ${title}`,
-			note: `Erbjudande inför ${title} (${when}) loggat som skickat.`
+			subject: tx("mail.offerSubject", { title }),
+			note: tx("mail.offerNote", {
+				title,
+				when
+			})
 		};
 	}
 	return {
-		KINDS,
 		LIMIT: 90,
-		INV_STATUS,
 		setClock,
 		todayISO,
 		daysSince,
@@ -788,7 +978,6 @@
 		draftSentPatch,
 		filterCustomers,
 		skipKey,
-		BOOKING_KINDS,
 		addDays,
 		upcomingBookings,
 		nextBooking,
@@ -829,6 +1018,15 @@
 		contrastRatio,
 		get SERVICE_TYPES() {
 			return serviceTypes();
+		},
+		get KINDS() {
+			return kinds();
+		},
+		get BOOKING_KINDS() {
+			return bookingKinds();
+		},
+		get INV_STATUS() {
+			return invoiceStatuses();
 		}
 	};
 });

@@ -1,4 +1,4 @@
-/* Typed access to the shared logic (kundregister/logic/), which the page loads as a plain script before the app
+/* Typed access to the shared logic (crm/logic/), which the page loads as a plain script before the app
  * (window.CRMLogic). The data model types (Brand, Customer, ...) are global types declared in logic/. */
 
 export interface CleanFonts { display: string; body: string; google: boolean }

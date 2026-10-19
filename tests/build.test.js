@@ -15,22 +15,22 @@ afterEach(() => fs.rmSync(tmp, {recursive: true, force: true}));
 
 const write = (file, text) => { fs.mkdirSync(path.dirname(file), {recursive: true}); fs.writeFileSync(file, text, 'utf8'); };
 const read = file => fs.readFileSync(file, 'utf8');
-// A copy of kundregister/ with the logic's modules (logic/) and tsconfig.json, and a stale logic.js.
+// A copy of crm/ with the logic's modules (logic/) and tsconfig.json, and a stale logic.js.
 // edit changes the text of logic/time.ts (e.g. to add a type error).
 function appCopy(edit = t => t) {
-  const dir = path.join(tmp, 'kundregister');
-  fs.cpSync(path.join(ROOT, 'kundregister', 'logic'), path.join(dir, 'logic'), {recursive: true});
-  write(path.join(dir, 'logic', 'time.ts'), edit(read(path.join(ROOT, 'kundregister', 'logic', 'time.ts'))));
-  write(path.join(dir, 'tsconfig.json'), read(path.join(ROOT, 'kundregister', 'tsconfig.json')));
+  const dir = path.join(tmp, 'crm');
+  fs.cpSync(path.join(ROOT, 'crm', 'logic'), path.join(dir, 'logic'), {recursive: true});
+  write(path.join(dir, 'logic', 'time.ts'), edit(read(path.join(ROOT, 'crm', 'logic', 'time.ts'))));
+  write(path.join(dir, 'tsconfig.json'), read(path.join(ROOT, 'crm', 'tsconfig.json')));
   write(path.join(dir, 'logic.js'), OLD_JS);
   return dir;
 }
 const run = (...args) => spawnSync(process.execPath, [BUILD, ...args], {encoding: 'utf8'});
 
 describe('tools/build.js', () => {
-  test('without --project the app in kundregister/ is built', () => {
+  test('without --project the app in crm/ is built', () => {
     const {parseArgs, DEFAULT_PROJECT} = require(BUILD);
-    expect(DEFAULT_PROJECT).toBe(path.join(ROOT, 'kundregister'));
+    expect(DEFAULT_PROJECT).toBe(path.join(ROOT, 'crm'));
     expect(parseArgs([]).project).toBe(DEFAULT_PROJECT);
   });
 
@@ -47,7 +47,7 @@ describe('tools/build.js', () => {
     test('gives exactly the committed logic.js', () => {
       const dir = appCopy();
       expect(run('--project', dir).status).toBe(0);
-      expect(read(path.join(dir, 'logic.js'))).toBe(read(path.join(ROOT, 'kundregister', 'logic.js')).replace(/\r\n/g, '\n'));
+      expect(read(path.join(dir, 'logic.js'))).toBe(read(path.join(ROOT, 'crm', 'logic.js')).replace(/\r\n/g, '\n'));
     });
   });
 
@@ -65,7 +65,7 @@ describe('tools/build.js', () => {
       write(path.join(dir, 'tsconfig.json'), '{"compilerOptions":{"target":"ES2020","strict":true,"noEmitOnError":true},"files":["a.ts","b.ts"]}');
       write(path.join(dir, 'a.ts'), 'const a: number = 1;\n');
       write(path.join(dir, 'b.ts'), "const b: string = 'b';\n");
-      const appJs = path.join(ROOT, 'kundregister', 'logic.js');
+      const appJs = path.join(ROOT, 'crm', 'logic.js');
       const before = fs.statSync(appJs).mtimeMs;
       expect(run('--project', dir).status).toBe(0);
       expect(fs.existsSync(path.join(dir, 'a.js'))).toBe(true);

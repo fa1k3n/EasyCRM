@@ -52,7 +52,7 @@ function typeCheck(entries) {
     const nm = path.join(ROOT, 'node_modules');
     fs.writeFileSync(path.join(dir, 'tsconfig.json'), JSON.stringify({
       compilerOptions: {...app, paths: {'crm-extension-api': [API], '*': [path.join(nm, '@types', '*'), path.join(nm, '*')]}},
-      files: [...entries, path.join(ROOT, 'kundregister', 'logic', 'types.ts'), path.join(APP, 'src', 'env.d.ts')]
+      files: [...entries, path.join(ROOT, 'crm', 'logic', 'types.ts'), path.join(APP, 'src', 'env.d.ts')]
     }));
     const r = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'build.js'), '--project', dir], {encoding: 'utf8'});
     if (r.status !== 0) throw new Error(`An extension has type errors:\n${r.stdout}${r.stderr}`);

@@ -1,5 +1,5 @@
 {
-  "name": "kundregister",
+  "name": "crm",
   "private": true,
   "description": "A small CRM that runs as a claude.ai artifact. Build, test and publishing tools run on Node.",
   "license": "MIT",

@@ -1,0 +1,32 @@
+{
+  "//": "An example brand. Copy the folder example/ to profile/ in the repo's root (ignored by git), fill it in, try it with npm run preview and assemble the publish folder with npm run deploy (both use profile/ automatically). Fields that start with // are comments and are ignored.",
+
+  "// company": "name: the company's name (shown in the header and the tab). short: an optional short form.",
+  "company": {"name": "Example Studio Ltd"},
+
+  "// language": "Optional: the app's language as a two-letter language code, \"en\" (English) or \"sv\" (Swedish). Swedish is used if the field is missing or the language is not in the app.",
+  "language": "en",
+
+  "// logo": "File name of an image in the same folder (png, svg, jpg or webp, at most 1 MB) or an https address. Shown at 44×44 px.",
+  "logo": "logo.svg",
+
+  "// colors": "accent: buttons and labels. ink: main text. bg: background. accentHover (optional): a button under the mouse pointer. Everything else, dark mode too, is worked out and contrast-checked (WCAG AA 4.5:1). overrides.light / overrides.dark can override single variables: bg, surface, sunk, ink, text, muted, line, accent, accent-hover, accent-ink, brand-soft, focus, info, shadow.",
+  "colors": {"accent": "#0f766e", "ink": "#1f2933", "bg": "#f6f7f7"},
+
+  "// fonts": "display: headings, body: body text. system-ui = the computer's own font. With googleFonts: true the names are loaded from Google Fonts.",
+  "fonts": {"display": "system-ui", "body": "system-ui"},
+
+  "// senders": "Senders for mail signatures. signature is the signature's lines in order. A company usually has one; more are only needed if some customer types should get another sender (see customerTypes[].sender).",
+  "senders": [
+    {"id": "standard", "name": "First Last", "company": "Example Studio Ltd", "phone": "000-000 00 00", "web": "www.examplestudio.example",
+     "signature": ["First Last", "Example Studio Ltd", "000-000 00 00 · www.examplestudio.example"]}
+  ],
+  "defaultSender": "standard",
+
+  "// customerTypes": "Customer types (a customer can have several). id: a–z, 0–9, - and _; never change it once customers have the type. label: the name that is shown. color: #rrggbb (colorDark optional for dark mode). icon: person, kamera, film, sandning, pokal, stjarna, portfolj, kalender, pratbubbla or prick (the app's own icons), or a lucide name like calendar-days (lucide.dev/icons; an unknown name gives a dot) – or svg: an icon of your own (SVG content for viewBox 0 0 16 16; only the elements path, circle, rect, line, polyline, polygon, ellipse and g, with drawing attributes such as d, fill and stroke). sender: an optional sender for customers with the type.",
+  "customerTypes": [
+    {"id": "konsultation", "label": "Consulting", "color": "#0f766e", "icon": "pratbubbla"},
+    {"id": "projekt", "label": "Project", "color": "#7c3aed", "icon": "portfolj"},
+    {"id": "event", "label": "Event", "color": "#b45309", "icon": "stjarna"}
+  ]
+}

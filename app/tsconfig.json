@@ -1,5 +1,5 @@
 {
-  "//": "Type check of the React app (npm run build). Vite builds it; this config only checks types. The logic (kundregister/logic/) is included for the shared data model types.",
+  "//": "Type check of the React app (npm run build). Vite builds it; this config only checks types. The logic (crm/logic/) is included for the shared data model types.",
   "compilerOptions": {
     "target": "ES2022",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
@@ -12,6 +12,6 @@
     "isolatedModules": true,
     "types": []
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "../kundregister/logic/*.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "../crm/logic/*.ts"],
   "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
 }

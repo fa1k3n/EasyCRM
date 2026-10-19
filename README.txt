@@ -1,84 +1,87 @@
-Kundregistret – ett litet CRM som claude.ai-artifact
-====================================================
+Customer register – a small CRM as a claude.ai artifact
+=======================================================
 
-Ett kundregister för ett litet företag: kunder och potentiella kunder, kontaktlogg med
-påminnelse efter 60/90 dagar, jobb och fakturor, kundernas event, bokningar och uppföljningar.
-Appen körs som en artifact på claude.ai, med artifactens inbyggda databas.
+A customer register for a small business: customers and potential customers, a contact log
+with a reminder after 60/90 days, jobs and invoices, the customers' events, bookings and
+follow-ups. The app runs as an artifact on claude.ai, with the artifact's built-in database.
 
-Företagets namn, logga, färger, typsnitt, avsändare och kundtyper kommer från en fil,
-brand.json, som slås ihop med koden vid publicering. Repot innehåller bara det påhittade
-exemplet Exempelstudion AB. Ditt eget varumärke (och eventuellt ett mailtillägg med färdiga
-mailtexter) lägger du i mappen profile\ i din kopia av repot. Den ignoreras av git och
-hamnar aldrig på GitHub.
+The company's name, logo, colours, fonts, senders and customer types come from a file,
+brand.json, which is merged with the code when publishing. The language is chosen there too:
+"language": "en" (English) or "sv" (Swedish). The repo only holds a made-up example. Your own
+brand (and any extensions, e.g. one with ready-made mail texts) goes in the folder profile/ in
+your copy of the repo. It is ignored by git and never ends up on GitHub.
 
-Licens: MIT (se LICENSE).
+Licence: MIT (see LICENSE).
 
-Kom igång
----------
-Kräver Node 24 (https://nodejs.org) och git, på Windows, macOS eller Linux.
+Getting started
+---------------
+Needs Node 24 (https://nodejs.org) and git, on Windows, macOS or Linux.
 
-1. Klona repot och installera npm-paketen (TypeScript, jest och playwright) i repots mapp:
+1. Clone the repo and install the npm packages (TypeScript, jest and playwright) in its folder:
      npm ci
-2. Skapa din varumärkesmapp från exemplet (i repots mapp):
-     cp -r exempel profile
-3. Fyll i profile\brand.json (fälten är förklarade i filen) och byt logo.svg mot din logga
-   (png, svg, jpg eller webp, högst 1 MB).
-4. Förhandsvisa med påhittade kunder (använder profile\ automatiskt):
+2. Create your brand folder from the example (in the repo's folder):
+     cp -r example profile
+3. Fill in profile/brand.json (the fields are explained in the file) and replace logo.svg with
+   your logo (png, svg, jpg or webp, at most 1 MB).
+4. Preview with made-up customers (uses profile/ automatically):
      npm run preview
-   och öppna sökvägen som skrivs ut.
-5. Sätt ihop publiceringsmappen profile\publicera (kontrollerar brand.json, kör alla tester):
+   and open the path that is printed.
+5. Assemble the publish folder profile/publish (checks brand.json, runs all tests):
      npm run deploy
-   (Med  npm run deploy -- --brand <mapp>  kan du använda en annan varumärkesmapp.)
-6. Be Claude (Claude Code) publicera profile\publicera som en artifact:
-   - index.html som sidan och de andra filerna (app.js, app.css, logic.js, brand.js och
-     loggan) bredvid.
-   - Databasen: capability db med regeln path "", read "admin", write "admin", så att bara du
-     kommer åt kunderna.
-   - Vid en ny version: publicera till samma artifact, läs först den publicerade versionen och
-     läs tillbaka filerna efteråt för att jämföra med publiceringsmappen.
+   (With  npm run deploy -- --brand <folder>  you can use another brand folder.)
+6. Ask Claude (Claude Code) to publish profile/publish as an artifact:
+   - index.html as the page and the other files (app.js, app.css, logic.js, brand.js and the
+     logo) next to it.
+   - The database: the capability db with the rule path "", read "admin", write "admin", so
+     that only you can reach the customers.
+   - For a new version: publish to the same artifact, read the published version first, and
+     read the files back afterwards to compare them with the publish folder.
 
-profile\ sparas inte i git och har ingen versionshistorik: säkerhetskopiera den själv,
-t.ex. tillsammans med databasen.
+profile/ is not saved in git and has no version history: back it up yourself, e.g. together
+with the database.
 
-Valfritt i varumärkesmappen:
-- extensions\: tillägg till appen: egna sektioner på
-  kundkortet, märken i kundlistan och färdiga mailtexter. Hur man skriver, testar, bygger och
-  publicerar ett tillägg står (på engelska) i exempel\extensions\README.md, med exemplet
-  "Nästa steg" i exempel\extensions\next-step\. Vill du inte ha exemplet: ta bort mappen.
-- run-tests.js: egna tester, körs av deploy med  node run-tests.js --repo <repot>.
+Optional in the brand folder:
+- extensions/: extensions to the app: sections of your own on the customer card, badges in
+  the customer list and ready-made mail texts. How to write, test, build and publish an
+  extension is described in example/extensions/README.md, with the example "Next step" in
+  example/extensions/next-step/. If you do not want the example: delete the folder.
+- run-tests.js: tests of your own, run by deploy as  node run-tests.js --repo <repo>.
 
-Innehåll
+Contents
 --------
-app\                           Appen i React + TSX + Tailwind (byggs med npm run build, provas med
-                               npm run preview och publiceras med npm run deploy). Tilläggs-API:t
-                               finns i app\src\extensions\api.ts
-kundregister\logic\            Ren logik i TypeScript, en modul per område: datum, kontaktstatus
-                               (60/90 dagar), filter, sortering, event, kalenderposter, varumärke
-                               och färger. types.ts beskriver datamodellen, index.ts är API:t.
-kundregister\logic.js          Byggd från logic/ (ändra aldrig för hand). Används av appen.
-kundregister\tsconfig.json     Inställningar för TypeScript
-kundregister\tests\            Enhetstester för logiken (körs med jest)
-exempel\                       Exempel på varumärke (brand.json och logga) och exempeltillägget
-                               (extensions\, med README.md om hur man skriver tillägg)
-tests\                         Tester för TypeScript-bygget, React-appens bygge,
-                               förhandsvisningen och deploy (jest)
-tools\build-app.js             Bygger React-appen (app\) med Vite till app.js, app.css och sidan
-                               index.html (en del av npm run build)
-tools\build.js                 Bygger logic/ till logic.js med TypeScript 6.0.3 från npm
-                               (npm run build; --project <mapp> bygger en annan mapp med tsconfig.json)
-package.json                   npm-projektet: exakta versioner av verktygen och paketen
-                               (typescript, jest, playwright, react, vite, tailwind m.fl.)
-tools\preview.js               Förhandsvisar appen lokalt med påhittade kunder (npm run preview)
-tools\deploy.js                Kontrollerar ett varumärke (brand.json), kör testerna och sätter
-                               ihop publiceringsmappen (index.html, app.js, app.css, logic.js,
-                               brand.js och bilder)
-.github\workflows\ci.yml       GitHub Actions: alla tester vid varje push
+app/                           The app in React + TSX + Tailwind (built with npm run build, tried
+                               with npm run preview and published with npm run deploy). The
+                               extension API is in app/src/extensions/api.ts; the texts are in
+                               app/src/i18n/ (sv.ts, en.ts)
+crm/logic/            Pure logic in TypeScript, one module per area: dates, contact
+                               status (60/90 days), filters, sorting, events, calendar items,
+                               brand, colours and the logic's texts (i18n.ts). types.ts
+                               describes the data model, index.ts is the API.
+crm/logic.js          Built from logic/ (never edit it by hand). Used by the app.
+crm/tsconfig.json     TypeScript settings
+crm/tests/            Unit tests of the logic (run with jest)
+example/                       Example brand (brand.json and logo) and the example extension
+                               (extensions/, with README.md on how to write extensions)
+tests/                         Tests of the TypeScript build, the React app's build, the
+                               preview and deploy (jest)
+tools/build-app.js             Builds the React app (app/) with Vite into app.js, app.css and
+                               the page index.html (part of npm run build)
+tools/build.js                 Builds logic/ into logic.js with TypeScript 6.0.3 from npm
+                               (npm run build; --project <folder> builds another folder with a
+                               tsconfig.json)
+package.json                   The npm project: exact versions of the tools and packages
+                               (typescript, jest, playwright, react, vite, tailwind and more)
+tools/preview.js               Previews the app locally with made-up customers (npm run preview)
+tools/deploy.js                Checks a brand (brand.json), runs the tests and assembles the
+                               publish folder (index.html, app.js, app.css, logic.js, brand.js
+                               and images)
+.github/workflows/ci.yml       GitHub Actions: all tests on every push
 
-Köra testerna
--------------
-     npm ci        (en gång, och när package-lock.json ändrats)
+Running the tests
+-----------------
+     npm ci        (once, and when package-lock.json has changed)
      npm test
 
-Först byggs och typkontrolleras logic/ och React-appen, sedan körs alla tester med jest:
-logikens tester (i jsdom), React-appens komponenttester och verktygens tester. Testerna har ett fast "idag" (2026-10-15), så resultatet
-beror inte på vilken dag de körs.
+First logic/ and the React app are built and type-checked, then all tests run with jest: the
+logic's tests (in jsdom), the React app's component tests and the tools' tests. The tests have
+a fixed "today" (2026-10-15), so the result does not depend on the day they run.

@@ -2,13 +2,13 @@
 /* Checks a brand and assembles a publish folder for the CRM.
  * Usage: node tools/deploy.js [--brand <folder with brand.json>] [--out-dir <folder>]   (npm run deploy -- ...)
  *   Publishes the React app (app/, built with tools/build-app.js, with the brand folder's extensions/).
- *   Without --brand, profile/ in the repo root is used (ignored by git; create it with  cp -r exempel profile ).
+ *   Without --brand, profile/ in the repo root is used (ignored by git; create it with  cp -r example profile ).
  *   1. brand.json is checked with the app's own check (validateBrand): valid JSON, required fields, colours,
  *      contrast (WCAG AA 4.5:1), unique customer type ids and that every sender a customer type points to exists.
  *   2. The images in the brand folder (png, svg, jpg, jpeg, webp) may be at most 1 MB, and the logo must exist.
  *   3. The brand's own tests (run-tests.js in the brand folder, called with --repo <repo>) and the repo's tests
  *      (npm test) are run.
- *   4. The publish folder (default: <brand folder>/publicera) gets index.html, app.js, app.css, logic.js, brand.js and the images.
+ *   4. The publish folder (default: <brand folder>/publish) gets index.html, app.js, app.css, logic.js, brand.js and the images.
  *   Mail texts come from an extension with mail (extensions/), built into app.js.
  * --skip-repo-tests skips the repo's tests (used by the tests of this script, which are part of the repo's tests).
  * Exit code 0 = the publish folder is ready, 1 = an error (then nothing is written). */
@@ -46,14 +46,14 @@ function run(cmd, args, opts = {}) {
 
 /* 1. brand.json, checked with the app's own logic. Returns {brand, text, errors}. */
 function checkBrandJson(brandFile) {
-  const L = require(path.join(ROOT, 'kundregister', 'logic.js'));
+  const L = require(path.join(ROOT, 'crm', 'logic.js'));
   const text = fs.readFileSync(brandFile, 'utf8').replace(/^\uFEFF/, '');
   let b;
   try { b = JSON.parse(text); } catch (e) { return {errors: [`brand.json is not valid JSON: ${e.message}`]}; }
   if (b === null || typeof b !== 'object' || Array.isArray(b)) return {errors: ['brand.json must be an object ({ ... })']};
   const errors = [...L.validateBrand(b)];
   // The app shows the brand anyway, but when publishing too low contrast counts as an error
-  if (b.colors) { try { errors.push(...L.deriveColors(b.colors).warnings); } catch { /* an invalid colour is already reported by validateBrand */ } }
+  if (b.colors) { try { errors.push(...L.deriveColors(b.colors, b.language).warnings); } catch { /* an invalid colour is already reported by validateBrand */ } }
   const ids = Array.isArray(b.senders) ? b.senders.map(s => s && s.id) : [];
   if (Array.isArray(b.customerTypes)) {
     b.customerTypes.forEach((t, i) => { if (t && t.sender && !ids.includes(t.sender)) errors.push(`customerTypes[${i}].sender "${t.sender}" does not exist among senders`); });
@@ -66,13 +66,13 @@ function deploy(args) {
   let brandDir = args.brand;
   if (!brandDir) {
     brandDir = path.join(ROOT, 'profile');
-    if (!fs.existsSync(brandDir)) fail(`The folder profile/ is missing in ${ROOT}. Create it from the example and fill in brand.json: cp -r exempel profile (or give --brand <folder>).`);
+    if (!fs.existsSync(brandDir)) fail(`The folder profile/ is missing in ${ROOT}. Create it from the example and fill in brand.json: cp -r example profile (or give --brand <folder>).`);
   }
   brandDir = path.resolve(brandDir);
   if (!fs.statSync(brandDir, {throwIfNoEntry: false})?.isDirectory()) fail(`The brand folder does not exist: ${brandDir}`);
   const brandFile = path.join(brandDir, 'brand.json');
-  if (!fs.existsSync(brandFile)) fail(`Cannot find brand.json in ${brandDir} (copy exempel/brand.json and fill it in)`);
-  const out = path.resolve(args.outDir || path.join(brandDir, 'publicera'));
+  if (!fs.existsSync(brandFile)) fail(`Cannot find brand.json in ${brandDir} (copy example/brand.json and fill it in)`);
+  const out = path.resolve(args.outDir || path.join(brandDir, 'publish'));
   // The publish folder is emptied before every run, so it may only contain files that deploy itself writes
   if (fs.existsSync(out)) {
     const foreign = fs.readdirSync(out, {withFileTypes: true})
@@ -118,7 +118,7 @@ function deploy(args) {
     fs.mkdirSync(out, {recursive: true});
     for (const e of fs.readdirSync(out, {withFileTypes: true})) if (e.isFile()) fs.rmSync(path.join(out, e.name));
     for (const f of ['index.html', 'app.js', 'app.css']) fs.copyFileSync(path.join(appDir, f), path.join(out, f));
-    fs.copyFileSync(path.join(ROOT, 'kundregister', 'logic.js'), path.join(out, 'logic.js'));
+    fs.copyFileSync(path.join(ROOT, 'crm', 'logic.js'), path.join(out, 'logic.js'));
   } finally {
     fs.rmSync(appDir, {recursive: true, force: true});
   }

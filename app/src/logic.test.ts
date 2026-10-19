@@ -1,4 +1,4 @@
-/* Tests for the parts of the shared logic (kundregister/logic.ts) that came with the React list: counts per segment,
+/* Tests for the parts of the shared logic (crm/logic/) that came with the React list: counts per segment,
  * when an event is, and whether an event is open. "Today" is fixed. All customers are made up. */
 const TODAY = '2026-10-15';
 const daysAgo = (n: number) => { const d = new Date(TODAY + 'T12:00:00'); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10); };
@@ -164,4 +164,80 @@ test('customerTypes reads only types: the old field type gives no types, and leg
   } finally {
     L().setBrand(null);
   }
+});
+
+describe('the logic in English (brand.json language "en")', () => {
+  const en = {company: {name: 'Example Ltd'}, language: 'en', colors: {accent: '#0f766e', ink: '#1f2933', bg: '#f6f7f7'}, senders: [{id: 's', signature: ['X']}],
+    defaultSender: 's', customerTypes: [{id: 'a', label: 'A', color: '#111111'}]} as unknown as Brand;
+  beforeEach(() => L().setBrand(en));
+  afterEach(() => L().setBrand(null));
+
+  test('contact status, kinds, booking kinds and invoice statuses', () => {
+    expect(L().daysLabel({level: 'never', days: null, d: null})).toBe('Not contacted');
+    expect(L().daysLabel({level: 'ok', days: 0, d: TODAY})).toBe('Today');
+    expect(L().daysLabel({level: 'ok', days: 5, d: daysAgo(5)})).toBe('5 d ago');
+    expect(L().KINDS.mote).toBe('Meeting');
+    expect(L().BOOKING_KINDS.jobb).toBe('Job');
+    expect(L().INV_STATUS.overdue).toBe('Overdue');
+    expect(L().dayMonth('2026-11-05')).toBe('5 November');
+  });
+  test('log entries without a mail extension, and calendar items', () => {
+    expect(L().logOnlyEntry({title: 'The fair', date: '2026-11-05'}, 'offer')).toEqual({subject: 'Offer before The fair', note: 'Offer before The fair (05/11 2026) logged as sent.'});
+    expect(L().logOnlyEntry({date: '2026-11-05'}, 'eventfu').subject).toBe('Follow-up after the event');
+    const items = L().calendarItems([{id: 'c', company: 'Example Ltd', status: 'kund', followUp: {date: '2026-10-20'},
+      jobs: [{id: 'j', invoiceNumber: '7', invoiceStatus: 'overdue', dueDate: '2026-10-25', amount: '100'}]} as Customer]);
+    expect(items.map(i => i.title)).toEqual(['Follow up: Example Ltd', 'Due: invoice #7 Example Ltd (100 SEK)']);
+  });
+  test('validateBrand answers in the language of the brand it checks', () => {
+    L().setBrand(null);
+    const broken = {...en, company: {}} as unknown as Brand;
+    expect(L().validateBrand(broken)).toContain('company.name is missing (the company name)');
+    expect(L().validateBrand({...broken, language: 'sv'} as unknown as Brand)).toContain('company.name saknas (företagets namn)');
+  });
+  test('Swedish when the brand has no language', () => {
+    L().setBrand(null);
+    expect(L().KINDS.mote).toBe('Möte');
+    expect(L().daysLabel({level: 'never', days: null, d: null})).toBe('Ej kontaktad');
+  });
+});
+
+test('the example brand (example/brand.json) is in English and passes validateBrand', () => {
+  const example = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, '..', '..', 'example', 'brand.json'), 'utf8'));
+  expect(example.language).toBe('en');
+  expect(L().validateBrand(example)).toEqual([]);
+});
+
+describe('the logic’s tables follow the brand language, in full', () => {
+  const brand = (language: string) => ({company: {name: 'X'}, language, colors: {accent: '#0f766e', ink: '#1f2933', bg: '#f6f7f7'}, senders: [{id: 's', signature: ['X']}],
+    defaultSender: 's', customerTypes: [{id: 'a', label: 'A', color: '#111111'}]} as unknown as Brand);
+  afterEach(() => L().setBrand(null));
+
+  test('with language "sv" (explicitly) everything is Swedish', () => {
+    L().setBrand(brand('sv'));
+    expect(L().KINDS).toEqual({mail_ut: 'Mail skickat', mail_in: 'Mail mottaget', samtal: 'Samtal', mote: 'Möte', ovrigt: 'Övrigt'});
+    expect(L().BOOKING_KINDS).toEqual({jobb: 'Jobb', mote: 'Möte', samtal: 'Samtal'});
+    expect(L().INV_STATUS).toEqual({published: 'Skickad', paid: 'Betald', overPaid: 'Överbetald', underPaid: 'Delbetald', overdue: 'Förfallen', credited: 'Krediterad', credit: 'Kreditnota'});
+    expect(L().daysLabel({level: 'ok', days: 5, d: daysAgo(5)})).toBe('5 d sedan');
+  });
+  test('with language "en" everything is English', () => {
+    L().setBrand(brand('en'));
+    expect(L().KINDS).toEqual({mail_ut: 'Mail sent', mail_in: 'Mail received', samtal: 'Call', mote: 'Meeting', ovrigt: 'Other'});
+    expect(L().BOOKING_KINDS).toEqual({jobb: 'Job', mote: 'Meeting', samtal: 'Call'});
+    expect(L().INV_STATUS).toEqual({published: 'Sent', paid: 'Paid', overPaid: 'Overpaid', underPaid: 'Partly paid', overdue: 'Overdue', credited: 'Credited', credit: 'Credit note'});
+  });
+  test('an invalid colour is named in the brand language', () => {
+    L().setBrand(brand('sv'));
+    expect(() => L().deriveColors({accent: 'x', ink: '#000000', bg: '#ffffff'})).toThrow('Ogiltig färg');
+    L().setBrand(brand('en'));
+    expect(() => L().deriveColors({accent: 'x', ink: '#000000', bg: '#ffffff'})).toThrow('Invalid colour');
+  });
+  test('typeColors names a broken customer type colour in the brand language', () => {
+    // setBrand checks the colours, so the colour is broken afterwards, in the brand object the logic keeps
+    for (const [language, field] of [['sv', 'kundtyp a'], ['en', 'customer type a']]) {
+      const b = brand(language);
+      L().setBrand(b);
+      (b.customerTypes[0] as {colorDark?: string}).colorDark = 'not-a-colour';
+      expect(() => L().typeColors()).toThrow(field);
+    }
+  });
 });

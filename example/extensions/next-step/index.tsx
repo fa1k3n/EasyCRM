@@ -1,4 +1,4 @@
-/* Example extension: "Nästa steg" (next step). It adds a section to the customer card where you note the next thing
+/* Example extension: "Next step". It adds a section to the customer card where you note the next thing
  * to do with the customer and by when, and a badge on the customer's row in the list while a next step is noted.
  * It shows the whole extension API, version 1: a manifest, a customer section that reads the customer and saves in
  * its own field (customer.ext["next-step"]), and a list badge. See ../README.md for how to write, build and publish
@@ -34,11 +34,11 @@ export function NextStep({data, save, canWrite}: CustomerSectionProps<NextStepDa
   };
   return (
     <form onSubmit={submit} className="grid grid-cols-[1fr_auto] gap-2">
-      <input aria-label="Nästa steg" placeholder="t.ex. Ring om offerten" value={text} onChange={e => setText(e.target.value)} className={`${field} col-span-2`} />
-      <input type="date" aria-label="Senast" value={date} onChange={e => setDate(e.target.value)} className={field} />
-      <button type="submit" disabled={status === 'saving'} className="rounded-full bg-accent px-4 py-1.5 font-bold text-accent-ink disabled:opacity-60">Spara</button>
-      {status === 'saved' && <p className="col-span-2 text-[13px] text-ok">Sparat</p>}
-      {status === 'error' && <p role="alert" className="col-span-2 text-[13px] text-tally">Kunde inte spara: {error}</p>}
+      <input aria-label="Next step" placeholder="e.g. Call about the quote" value={text} onChange={e => setText(e.target.value)} className={`${field} col-span-2`} />
+      <input type="date" aria-label="By" value={date} onChange={e => setDate(e.target.value)} className={field} />
+      <button type="submit" disabled={status === 'saving'} className="rounded-full bg-accent px-4 py-1.5 font-bold text-accent-ink disabled:opacity-60">Save</button>
+      {status === 'saved' && <p className="col-span-2 text-[13px] text-ok">Saved</p>}
+      {status === 'error' && <p role="alert" className="col-span-2 text-[13px] text-tally">Could not save: {error}</p>}
     </form>
   );
 }
@@ -47,14 +47,14 @@ export function NextStep({data, save, canWrite}: CustomerSectionProps<NextStepDa
 function badge(c: ReadonlyCustomer) {
   const d = c.ext?.[ID] as NextStepData | undefined;
   if (!d?.text) return null;
-  return {text: d.date ? `Nästa steg ${d.date}` : 'Nästa steg', title: d.text};
+  return {text: d.date ? `Next step ${d.date}` : 'Next step', title: d.text};
 }
 
 const manifest: ExtensionManifest = {
   id: ID,
   apiVersion: 1,
-  name: 'Nästa steg',
-  customerSections: [{id: 'next-step', title: 'Nästa steg', Component: NextStep}],
+  name: 'Next step',
+  customerSections: [{id: 'next-step', title: 'Next step', Component: NextStep}],
   listBadges: [badge]
 };
 export default manifest;
