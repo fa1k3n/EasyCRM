@@ -23,6 +23,11 @@ function brand(name, change = t => t) {
   fs.copyFileSync(path.join(ROOT, 'exempel', 'logo.svg'), path.join(dir, 'logo.svg'));
   return dir;
 }
+// What building the React app needs in a repo copy: the build tools, and links to the app, the logic and node_modules
+function appParts(dir) {
+  for (const f of ['build-app.js', 'build.js']) write(path.join(dir, 'tools', f), read(path.join(ROOT, 'tools', f)));
+  for (const d of ['app', 'node_modules', path.join('kundregister', 'logic')]) fs.symlinkSync(path.join(ROOT, d), path.join(dir, d), 'junction');
+}
 function deploy(...args) {
   const r = spawnSync(process.execPath, [SCRIPT, ...args, '--skip-repo-tests'], {encoding: 'utf8'});
   return {code: r.status, out: r.stdout + r.stderr};
@@ -33,13 +38,13 @@ describe('tools/deploy.js', () => {
     let out, r;
     beforeEach(() => { out = path.join(tmp, 'out'); r = deploy('--brand', path.join(ROOT, 'exempel'), '--out-dir', out); });
 
-    test('is approved: exit code 0, index.html, logic.js, brand.js and the logo, no mail plugin', () => {
+    test('is approved: exit code 0, the React app (index.html, app.js, app.css), logic.js, brand.js and the logo, no mail plugin', () => {
       expect(r.code).toBe(0);
-      for (const f of ['index.html', 'logic.js', 'brand.js', 'logo.svg']) expect(exists(out, f)).toBe(true);
+      for (const f of ['index.html', 'app.js', 'app.css', 'logic.js', 'brand.js', 'logo.svg']) expect(exists(out, f)).toBe(true);
       expect(exists(out, 'mail.js')).toBe(false);
     });
-    test('index.html and logic.js are the repo files', () => {
-      expect(read(path.join(out, 'index.html'))).toBe(read(path.join(ROOT, 'kundregister', 'index.html')));
+    test('index.html is the React page fragment and logic.js the repo file', () => {
+      expect(read(path.join(out, 'index.html'))).toBe(read(path.join(ROOT, 'app', 'index.html')));
       expect(read(path.join(out, 'logic.js'))).toBe(read(path.join(ROOT, 'kundregister', 'logic.js')));
     });
     test('brand.js sets window.BRAND to brand.json', () => {
@@ -88,44 +93,6 @@ describe('tools/deploy.js', () => {
     expect(r.out).toMatch('1 MB');
   });
 
-  describe('mail plugin', () => {
-    test('a ready mail/mail.js is included', () => {
-      const dir = brand('mail-js');
-      write(path.join(dir, 'mail', 'mail.js'), 'window.CRM_MAIL = {};\n');
-      const out = path.join(dir, 'out');
-      expect(deploy('--brand', dir, '--out-dir', out).code).toBe(0);
-      expect(read(path.join(out, 'mail.js'))).toBe('window.CRM_MAIL = {};\n');
-    });
-    test('a mail.js from an earlier run is removed when the plugin no longer exists', () => {
-      const dir = brand('mail-old');
-      const out = path.join(dir, 'out');
-      write(path.join(out, 'mail.js'), '// from an earlier run\n');
-      expect(deploy('--brand', dir, '--out-dir', out).code).toBe(0);
-      expect(fs.existsSync(path.join(out, 'mail.js'))).toBe(false);
-    });
-  });
-
-  describe('mail plugin in TypeScript (mail/tsconfig.json)', () => {
-    test('is built against the contract in the repo and included', () => {
-      const dir = brand('mail-ts');
-      write(path.join(dir, 'mail', 'tsconfig.json'), '{"compilerOptions":{"target":"ES2020","strict":true,"noEmitOnError":true},"files":["mail.ts","mail-api.d.ts"]}');
-      write(path.join(dir, 'mail', 'mail.ts'), 'const mod: CrmMailModule | undefined = undefined;\n');
-      const out = path.join(dir, 'out');
-      expect(deploy('--brand', dir, '--out-dir', out).code).toBe(0);
-      expect(exists(dir, 'mail', 'mail-api.d.ts')).toBe(true);
-      expect(read(path.join(out, 'mail.js'))).toMatch('const mod = undefined');
-    });
-    test('a type error stops the publishing', () => {
-      const dir = brand('mail-ts-error');
-      write(path.join(dir, 'mail', 'tsconfig.json'), '{"compilerOptions":{"target":"ES2020","strict":true,"noEmitOnError":true},"files":["mail.ts"]}');
-      write(path.join(dir, 'mail', 'mail.ts'), "const a: number = 'not a number';\n");
-      const r = deploy('--brand', dir, '--out-dir', path.join(dir, 'out'));
-      expect(r.code).toBe(1);
-      expect(r.out).toMatch('mail');
-      expect(exists(dir, 'out')).toBe(false);
-    });
-  });
-
   describe("the brand's own tests (run-tests.js in the brand folder)", () => {
     test('are run with --repo, and a successful run is approved', () => {
       const dir = brand('tests-ok');
@@ -139,14 +106,6 @@ describe('tools/deploy.js', () => {
       const r = deploy('--brand', dir, '--out-dir', path.join(dir, 'out'));
       expect(r.code).toBe(1);
       expect(r.out).toMatch('tests');
-      expect(exists(dir, 'out')).toBe(false);
-    });
-    test('an old run-tests.ps1 stops the publishing with an explanation', () => {
-      const dir = brand('tests-ps1');
-      write(path.join(dir, 'run-tests.ps1'), 'exit 0\n');
-      const r = deploy('--brand', dir, '--out-dir', path.join(dir, 'out'));
-      expect(r.code).toBe(1);
-      expect(r.out).toMatch('run-tests.js');
       expect(exists(dir, 'out')).toBe(false);
     });
   });
@@ -168,53 +127,26 @@ describe('tools/deploy.js', () => {
       expect(exists(dir, 'publicera', 'brand.js')).toBe(true);
     });
   });
-
-  // Without --brand, varumarke/ in the repo root is used. Runs in a temporary copy of what deploy needs,
-  // so that the repo's own root never gets a varumarke/.
-  describe('without --brand', () => {
-    function repoCopy(name) {
-      const dir = path.join(tmp, name);
-      write(path.join(dir, 'tools', 'deploy.js'), read(SCRIPT));
-      for (const f of ['index.html', 'logic.js', 'mail-api.d.ts']) write(path.join(dir, 'kundregister', f), read(path.join(ROOT, 'kundregister', f)));
-      fs.cpSync(path.join(ROOT, 'exempel'), path.join(dir, 'exempel'), {recursive: true});
-      return dir;
-    }
-    const run = repo => {
-      const r = spawnSync(process.execPath, [path.join(repo, 'tools', 'deploy.js'), '--skip-repo-tests'], {encoding: 'utf8'});
-      return {code: r.status, out: r.stdout + r.stderr};
-    };
-    test('varumarke/ in the repo root is used, and the publish folder becomes varumarke/publicera', () => {
-      const repo = repoCopy('repo-with');
-      fs.cpSync(path.join(repo, 'exempel'), path.join(repo, 'varumarke'), {recursive: true});
-      expect(run(repo).code).toBe(0);
-      expect(read(path.join(repo, 'varumarke', 'publicera', 'brand.js'))).toMatch('Exempelstudion AB');
-    });
-    test('without varumarke/: exit code 1 and an error that says how to create it from exempel', () => {
-      const r = run(repoCopy('repo-without'));
-      expect(r.code).toBe(1);
-      expect(r.out).toMatch('varumarke');
-      expect(r.out).toMatch('exempel');
-    });
-  });
 });
 
-describe('tools/deploy.js --react (the React app)', () => {
-  test('the publish folder gets the React page fragment, app.js and app.css instead of the old index.html', () => {
+describe('tools/deploy.js (the React app)', () => {
+  test('the publish folder gets the React page fragment, app.js and app.css', () => {
     const out = path.join(tmp, 'react-out');
-    const r = deploy('--brand', path.join(ROOT, 'exempel'), '--out-dir', out, '--react');
+    const r = deploy('--brand', path.join(ROOT, 'exempel'), '--out-dir', out);
     expect(r.code).toBe(0);
     for (const f of ['index.html', 'app.js', 'app.css', 'logic.js', 'brand.js', 'logo.svg']) expect(exists(out, f)).toBe(true);
     expect(read(path.join(out, 'index.html'))).toMatch('<div id="root"></div>');
   }, 120000);
 });
 
-// The brand folder is called profile/ (#3); an old varumarke/ still works, with a message to rename it
+// Without --brand, profile/ in the repo root is used (#3)
 describe('tools/deploy.js and the profile/ folder (#3)', () => {
   function repoCopy(name) {
     const dir = path.join(tmp, name);
     write(path.join(dir, 'tools', 'deploy.js'), read(SCRIPT));
-    for (const f of ['index.html', 'logic.js', 'mail-api.d.ts']) write(path.join(dir, 'kundregister', f), read(path.join(ROOT, 'kundregister', f)));
+    write(path.join(dir, 'kundregister', 'logic.js'), read(path.join(ROOT, 'kundregister', 'logic.js')));
     fs.cpSync(path.join(ROOT, 'exempel'), path.join(dir, 'exempel'), {recursive: true});
+    appParts(dir);
     return dir;
   }
   const run = repo => {
@@ -228,21 +160,6 @@ describe('tools/deploy.js and the profile/ folder (#3)', () => {
     expect(r.code).toBe(0);
     expect(read(path.join(repo, 'profile', 'publicera', 'brand.js'))).toMatch('Exempelstudion AB');
     expect(r.out).not.toMatch('varumarke');
-  });
-  test('an old varumarke/ is still used, with a message to rename it to profile/', () => {
-    const repo = repoCopy('old');
-    fs.cpSync(path.join(repo, 'exempel'), path.join(repo, 'varumarke'), {recursive: true});
-    const r = run(repo);
-    expect(r.code).toBe(0);
-    expect(r.out).toMatch(/rename.*varumarke.*profile/i);
-  });
-  test('with both, profile/ is used', () => {
-    const repo = repoCopy('both');
-    fs.cpSync(path.join(repo, 'exempel'), path.join(repo, 'profile'), {recursive: true});
-    fs.cpSync(path.join(repo, 'exempel'), path.join(repo, 'varumarke'), {recursive: true});
-    expect(run(repo).code).toBe(0);
-    expect(exists(repo, 'profile', 'publicera', 'brand.js')).toBe(true);
-    expect(exists(repo, 'varumarke', 'publicera')).toBe(false);
   });
   test('without a brand folder the error says how to create profile/ from exempel', () => {
     const r = run(repoCopy('none'));

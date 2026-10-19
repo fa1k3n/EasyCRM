@@ -8,9 +8,7 @@ const STACK = 'ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif';
 export interface AppliedBrand { brand: Brand; error: string }
 
 /* CSS for the brand. Values are stripped of characters that could end the rule, since a brand may pass a raw value
- * (e.g. a shadow) through. Same rules as brandCss in the old kundregister/index.html (which also sets --f-mono and the
- * per-type classes; those come with the list and the icons here). The old page is removed when the app switches to
- * React; until then a change to the shared rules must be made in both places. */
+ * (e.g. a shadow) through. */
 export function brandCss(b: Brand): string {
   const L = logic();
   const fonts = L.brandFonts(b.fonts || {});

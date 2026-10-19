@@ -1,5 +1,4 @@
 /* The customer card: the changes that are written with update on the customer (contacts, jobs, status, the form). */
-import {legacyType} from './brand';
 import {lastTouch} from './contact';
 
 // A new contact in the log: the latest contact is worked out again, and the latest mail is set for a mail
@@ -24,14 +23,11 @@ export const removeJobPatch = (c: Customer, id: string): Partial<Customer> => {
 };
 // Customer or potential customer: only the status changes, nothing else in the document
 export const statusPatch = (status: 'kund' | 'potentiell'): Partial<Customer> => ({status});
-// The customer form: the fields trimmed, the customer types, and the old type field only if the brand wants it
-// (legacyWrite). The errors are text keys (the language files), not finished texts.
+// The customer form: the fields trimmed and the customer types. The errors are text keys (the language files), not finished texts.
 interface CustomerForm { company?: string; name?: string; role?: string; email?: string; phone?: string; website?: string; city?: string; notes?: string; status: string; types: string[]; }
 export const customerFormPatch = (f: CustomerForm): {patch: Partial<Customer>; errors: string[]} => {
   const v = (x?: string) => (x || '').trim();
   const patch: Partial<Customer> = {company: v(f.company), name: v(f.name), role: v(f.role), email: v(f.email), phone: v(f.phone),
     website: v(f.website), city: v(f.city), notes: v(f.notes), status: f.status, types: [...f.types]};
-  const legacy = legacyType({types: f.types});
-  if (legacy) patch.type = legacy;
   return {patch, errors: patch.company || patch.name ? [] : ['companyOrName']};
 };

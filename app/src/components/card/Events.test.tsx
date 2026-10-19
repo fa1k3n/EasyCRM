@@ -152,3 +152,25 @@ test('a draft can be discarded', async () => {
   expect(doc().draft).toBeNull();
   expect(doc().comms || []).toEqual([]);
 });
+
+test('a mail extension gets helpers from the app: fmtDate, dayMonth, signature and customerTypes', async () => {
+  let seen: Record<string, unknown> = {};
+  const mail = {...MAIL, buildOffer: (c: unknown, e: {title?: string; date?: string}, h: Record<string, (x: unknown) => unknown>) => {
+    seen = {fmt: h.fmtDate(e.date), day: h.dayMonth(e.date), sig: typeof h.signature(c), types: Array.isArray(h.customerTypes(c))};
+    return MAIL.buildOffer(c as {name?: string}, e);
+  }};
+  await show('k1', {mail});
+  fireEvent.click(within(events()).getByRole('button', {name: '✉ Erbjud tjänster'}));
+  expect(seen).toEqual({fmt: '27/10 2026', day: '27 oktober', sig: 'string', types: true});
+});
+
+test('an old mail plugin (window.CRM_MAIL) is not used: without a mail extension the offer is logged without text', async () => {
+  (window as {CRM_MAIL?: unknown}).CRM_MAIL = MAIL;
+  try {
+    await show('k1');
+    fireEvent.click(within(events()).getByRole('button', {name: /Erbjud tjänster|Logga erbjudande/}));
+    expect(screen.queryByLabelText('Till')).toBeNull();
+  } finally {
+    delete (window as {CRM_MAIL?: unknown}).CRM_MAIL;
+  }
+});

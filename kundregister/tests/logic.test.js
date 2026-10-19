@@ -26,13 +26,6 @@ describe('Datum', () => {
   test('dayMonth skriver ut månaden på svenska', () => { eq(L.dayMonth('2026-01-05'), '5 januari'); eq(L.dayMonth('2026-12-24'), '24 december'); });
 });
 
-describe('esc', () => {
-  test('escapar HTML-tecken', () => eq(L.esc('<a href="x">\'&</a>'), '&lt;a href=&quot;x&quot;&gt;&#39;&amp;&lt;/a&gt;'));
-  test('null och undefined blir tom sträng', () => { eq(L.esc(null), ''); eq(L.esc(undefined), ''); });
-  test('siffror blir text', () => eq(L.esc(42), '42'));
-  test('åäö lämnas orörda', () => eq(L.esc('Åsa Öberg'), 'Åsa Öberg'));
-});
-
 describe('safeUrl', () => {
   test('http och https lämnas som de är', () => {
     eq(L.safeUrl('https://exempelstudion.example'), 'https://exempelstudion.example');
@@ -134,7 +127,7 @@ describe('Kundlistan', () => {
     cust({id: 'red', company: 'Röda AB', comms: [mail(daysAgo(200))], createdAt: '2026-01-01'}),
     cust({id: 'red2', company: 'Rödare AB', comms: [mail(daysAgo(300))], createdAt: '2026-02-01'}),
     cust({id: 'never', company: 'Aldrig AB', status: 'potentiell', createdAt: '2026-10-01'}),
-    cust({id: 'warn', company: 'Gula AB', comms: [mail(daysAgo(70))], type: 'sport', createdAt: '2026-03-01'}),
+    cust({id: 'warn', company: 'Gula AB', comms: [mail(daysAgo(70))], types: ['sport'], createdAt: '2026-03-01'}),
     cust({id: 'fresh', company: 'Bo AB', name: 'Ella Exempelsson', email: 'ella@exempelbolaget.se', comms: [mail(daysAgo(2))], createdAt: '2026-04-01'})
   ];
   const ids = view => L.filterCustomers(list, Object.assign({seg: 'alla', type: 'alla', q: '', sort: 'kontakt'}, view)).map(c => c.id);
@@ -376,25 +369,12 @@ describe('Kundtyper: CV, Foto, Video, Live, Sport (flera per kund)', () => {
   test('customerTypes läser types-listan i fast ordning, utan dubbletter och okända värden', () => {
     eq(L.customerTypes(cust({types: ['sport', 'live', 'cv', 'live', 'okand']})), ['cv', 'live', 'sport']);
   });
-  test('gamla kunder översätts från type: headshot → cv, liveprod → live, sport → live + sport, ovrigt → inget', () => {
-    eq(L.customerTypes({type: 'headshot'}), ['cv']);
-    eq(L.customerTypes({type: 'liveprod'}), ['live']);
-    eq(L.customerTypes({type: 'sport'}), ['live', 'sport']);
-    eq(L.customerTypes({type: 'ovrigt'}), []);
-    eq(L.customerTypes({}), []);
-  });
   test('en tom types-lista betyder inga typer, även om gammalt type finns', () => eq(L.customerTypes({type: 'headshot', types: []}), []));
   test('filtret på de nya typerna använder alla kundens typer', () => {
-    const list = [cust({id: 'a', types: ['cv', 'video']}), cust({id: 'b', types: ['live']}), cust({id: 'c', type: 'liveprod'}), cust({id: 'd', types: ['live', 'sport']})];
+    const list = [cust({id: 'a', types: ['cv', 'video']}), cust({id: 'b', types: ['live']}), cust({id: 'c', types: ['live']}), cust({id: 'd', types: ['live', 'sport']})];
     eq(L.filterCustomers(list, {seg: 'alla', type: 'video', q: '', sort: 'namn'}).map(c => c.id), ['a']);
     eq(L.filterCustomers(list, {seg: 'alla', type: 'live', q: '', sort: 'namn'}).map(c => c.id).sort(), ['b', 'c', 'd']);
     eq(L.filterCustomers(list, {seg: 'alla', type: 'sport', q: '', sort: 'namn'}).map(c => c.id), ['d']);
-  });
-  test('legacyType ger ett gammalt typvärde för agenter som fortfarande läser type', () => {
-    eq(L.legacyType({types: ['live', 'sport']}), 'sport');
-    eq(L.legacyType({types: ['video', 'live']}), 'liveprod');
-    eq(L.legacyType({types: ['cv', 'foto']}), 'headshot');
-    eq(L.legacyType({types: []}), 'ovrigt');
   });
 });
 
@@ -428,5 +408,4 @@ describe('Kundlistan: borttaget eventfilter', () => {
 
 describe('Gamla typnamn borttagna', () => {
   test('den gamla konstanten TYPES exporteras inte längre', () => eq(L.TYPES, undefined));
-  test('gamla type-värden översätts fortfarande via customerTypes', () => eq(L.customerTypes({type: 'liveprod'}), ['live']));
 });

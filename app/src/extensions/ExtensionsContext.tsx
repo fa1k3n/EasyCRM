@@ -6,7 +6,6 @@ import ErrorBoundary from '../components/ErrorBoundary';
 import type {CustomerDoc} from '../data/store';
 import {useStore} from '../data/StoreContext';
 import type {Json, MailTexts, ReadonlyCustomer} from './api';
-import {logic} from '../logic';
 import type {LoadedExtensions} from './load';
 
 const Ctx = createContext<LoadedExtensions>({extensions: [], errors: []});
@@ -14,16 +13,12 @@ const Ctx = createContext<LoadedExtensions>({extensions: [], errors: []});
 export function ExtensionsProvider({loaded, children}: {loaded: LoadedExtensions; children: ReactNode}) {
   return <Ctx.Provider value={loaded}>{children}</Ctx.Provider>;
 }
-export const useExtensions = () => useContext(Ctx);
+const useExtensions = () => useContext(Ctx);
 
-/* The mail texts: the first extension with mail, otherwise an old mail plugin (mail.js, window.CRM_MAIL) if it is
- * complete, otherwise null (offers and follow-ups are then logged without text). */
+/* The mail texts: the first extension with mail, otherwise null (offers and follow-ups are then logged without text) */
 export function useMail(): MailTexts | null {
   const {extensions} = useExtensions();
-  const fromExt = extensions.find(e => e.mail)?.mail;
-  if (fromExt) return fromExt;
-  const old = (window as {CRM_MAIL?: unknown}).CRM_MAIL;
-  return old && !logic().checkMailModule(old).length ? old as MailTexts : null;
+  return extensions.find(e => e.mail)?.mail ?? null;
 }
 
 // A frozen deep copy: the extension can read the customer but not change it

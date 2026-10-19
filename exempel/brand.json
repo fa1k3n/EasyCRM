@@ -28,7 +28,5 @@
     {"id": "konsultation", "label": "Konsultation", "color": "#0f766e", "icon": "pratbubbla"},
     {"id": "projekt", "label": "Projekt", "color": "#7c3aed", "icon": "portfolj"},
     {"id": "event", "label": "Event", "color": "#b45309", "icon": "stjarna"}
-  ],
-
-  "// legacy": "Behövs bara om registret har äldre kunder med fältet type i stället för types: legacyTypes översätter gamla värden till typ-id, legacyWrite/legacyDefault bestämmer vilket gammalt värde som skrivs för äldre agenter. Utelämna annars."
+  ]
 }

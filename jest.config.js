@@ -1,5 +1,5 @@
 /* jest settings. Three groups of tests:
- * - app: the logic's browser tests (kundregister/tests), loaded by run.jest.js in jsdom exactly like run.html does
+ * - app: the logic's browser tests (kundregister/tests), loaded as scripts by run.jest.js in jsdom
  * - ui: the React app's component tests (app/src/**\/*.test.ts(x)), TSX compiled by Babel, in jsdom
  * - tools: the tools' tests in tests/*.test.js, run in Node */
 const babel = ['babel-jest', {

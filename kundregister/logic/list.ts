@@ -1,13 +1,13 @@
 /* The customer list: filters, sorting, counts per segment, and the key for a removed agent suggestion. */
 import {hasBooking} from './bookings';
-import {customerTypes, serviceTypes} from './brand';
+import {customerTypes} from './brand';
 import {contactScore, needsContact} from './contact';
 import {safeUrl} from './text';
 
 type Segment = 'alla' | 'kontakta' | 'bokat' | 'kunder' | 'potentiella';
 const SEGMENTS: Segment[] = ['alla', 'kontakta', 'bokat', 'kunder', 'potentiella'];
 // Whether the customer belongs to the segment (an unknown segment shows all, like "alla")
-export const inSegment = (c: Customer, seg: string): boolean =>
+const inSegment = (c: Customer, seg: string): boolean =>
   seg === 'kontakta' ? needsContact(c) : seg === 'bokat' ? hasBooking(c) : seg === 'kunder' ? c.status !== 'potentiell' : seg === 'potentiella' ? c.status === 'potentiell' : true;
 // The number of customers in each segment (the same division as filterCustomers)
 export const segmentCounts = (customers: Customer[]): Record<Segment, number> =>
@@ -16,9 +16,7 @@ export const segmentCounts = (customers: Customer[]): Record<Segment, number> =>
 export function filterCustomers(customers: Customer[], view: View): Customer[] {
   const q = (view.q || '').trim().toLowerCase();
   const items = customers.filter(c => {
-    if (view.type && view.type !== 'alla') {
-      if (serviceTypes()[view.type] ? !customerTypes(c).includes(view.type) : c.type !== view.type) return false;
-    }
+    if (view.type && view.type !== 'alla' && !customerTypes(c).includes(view.type)) return false;
     if (view.seg && !inSegment(c, view.seg)) return false;
     if (q) { const hay = [c.company,c.name,c.email,c.phone,c.notes].join(' ').toLowerCase(); if (!hay.includes(q)) return false; }
     return true;

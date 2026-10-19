@@ -8,7 +8,7 @@ import RemoveButton from './RemoveButton';
 
 const STATUS_COLOR: Record<string, string> = {paid: 'text-ok', overPaid: 'text-ok', overdue: 'text-tally', underPaid: 'text-amber'};
 
-/* Jobs and invoices (for example from Bokio): a form to add a job and the jobs, newest first, with amount, invoice
+/* Jobs and invoices: a form to add a job and the jobs, newest first, with amount, invoice
  * number, invoice status and a link to the invoice when it is a safe address. Not shown for potential customers. */
 export default function Jobs({c}: {c: CustomerDoc}) {
   const L = logic();

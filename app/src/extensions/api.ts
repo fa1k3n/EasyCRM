@@ -35,9 +35,20 @@ export interface CustomerSection {
 export type ListBadge = (customer: ReadonlyCustomer) => {text: string; title?: string} | null;
 
 export interface MailText { subject: string; body: string; note: string; kind?: string; tags?: string[]; hint?: string }
+/** Helpers the app gives a mail extension, so that it does not need the app's globals */
+export interface MailHelpers {
+  /** 2026-10-27 → "27/10 2026" (empty text without a date) */
+  fmtDate(iso?: string | null): string;
+  /** 2026-10-27 → "27 oktober" */
+  dayMonth(iso: string): string;
+  /** The signature of the sender the customer's types give (brand.json), as lines joined with \n */
+  signature(customer: ReadonlyCustomer): string;
+  /** The customer's type ids */
+  customerTypes(customer: ReadonlyCustomer): string[];
+}
 export interface MailTexts {
-  buildOffer(customer: ReadonlyCustomer, event: CustomerEvent): MailText;
-  buildEventFollowUp(customer: ReadonlyCustomer, event: CustomerEvent): MailText;
+  buildOffer(customer: ReadonlyCustomer, event: CustomerEvent, helpers: MailHelpers): MailText;
+  buildEventFollowUp(customer: ReadonlyCustomer, event: CustomerEvent, helpers: MailHelpers): MailText;
 }
 
 export interface ExtensionManifest {
@@ -47,7 +58,7 @@ export interface ExtensionManifest {
   name: string;
   customerSections?: CustomerSection[];
   listBadges?: ListBadge[];
-  /** Ready mail texts for offers before a customer's event and follow-ups after it (the mail plugin's contract,
-   * kundregister/mail-api.d.ts). The app logs a sent mail itself; the extension only writes the text. */
+  /** Ready mail texts for offers before a customer's event and follow-ups after it. The app logs a sent mail itself;
+   * the extension only writes the text. */
   mail?: MailTexts;
 }

@@ -50,6 +50,7 @@
 		mote: "Möte",
 		ovrigt: "Övrigt"
 	};
+	var WARN = 60;
 	var INV_STATUS = {
 		published: "Skickad",
 		paid: "Betald",
@@ -75,7 +76,7 @@
 		};
 		const days = daysSince(d);
 		return {
-			level: days >= 90 ? "over" : days >= 60 ? "warn" : "ok",
+			level: days >= 90 ? "over" : days >= WARN ? "warn" : "ok",
 			days,
 			d
 		};
@@ -501,14 +502,8 @@
 	var getBrand = () => brand;
 	var serviceTypes = () => Object.fromEntries(brand.customerTypes.map((t) => [t.id, t.label]));
 	function customerTypes(c) {
-		const src = Array.isArray(c.types) ? c.types : (brand.legacyTypes || {})[c.type] || [];
+		const src = Array.isArray(c.types) ? c.types : [];
 		return brand.customerTypes.map((t) => t.id).filter((id) => src.includes(id));
-	}
-	function legacyType(c) {
-		if (!brand.legacyWrite) return void 0;
-		const t = customerTypes(c);
-		for (const r of brand.legacyWrite) if (r.ifAny.includes("*") ? t.length > 0 : r.ifAny.some((x) => t.includes(x))) return r.type;
-		return brand.legacyDefault;
 	}
 	function senderFor(c) {
 		const byId = (id) => brand.senders.find((s) => s.id === id);
@@ -632,20 +627,11 @@
 			status: f.status,
 			types: [...f.types]
 		};
-		const legacy = legacyType({ types: f.types });
-		if (legacy) patch.type = legacy;
 		return {
 			patch,
 			errors: patch.company || patch.name ? [] : ["companyOrName"]
 		};
 	};
-	var esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({
-		"&": "&amp;",
-		"<": "&lt;",
-		">": "&gt;",
-		"\"": "&quot;",
-		"'": "&#39;"
-	})[c]);
 	var safeUrl = (u) => /^https?:\/\//i.test(u || "") ? u : u && /^[\w.-]+\.[a-z]{2,}/i.test(u) ? "https://" + u : null;
 	var hostOf = (u) => {
 		try {
@@ -666,9 +652,7 @@
 	function filterCustomers(customers, view) {
 		const q = (view.q || "").trim().toLowerCase();
 		const items = customers.filter((c) => {
-			if (view.type && view.type !== "alla") {
-				if (serviceTypes()[view.type] ? !customerTypes(c).includes(view.type) : c.type !== view.type) return false;
-			}
+			if (view.type && view.type !== "alla" && !customerTypes(c).includes(view.type)) return false;
 			if (view.seg && !inSegment(c, view.seg)) return false;
 			if (q) {
 				if (![
@@ -776,15 +760,12 @@
 	return {
 		KINDS,
 		LIMIT: 90,
-		WARN: 60,
 		INV_STATUS,
-		MONTHS,
 		setClock,
 		todayISO,
 		daysSince,
 		fmtDate,
 		dayMonth,
-		esc,
 		safeUrl,
 		hostOf,
 		lastTouch,
@@ -805,7 +786,6 @@
 		addEventPatch,
 		dismissEventPatch,
 		draftSentPatch,
-		contactScore,
 		filterCustomers,
 		skipKey,
 		BOOKING_KINDS,
@@ -836,7 +816,6 @@
 		eventConflicts,
 		eventBadge,
 		customerTypes,
-		legacyType,
 		EXAMPLE_BRAND,
 		setBrand,
 		getBrand,

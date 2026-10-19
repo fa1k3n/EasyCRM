@@ -1,6 +1,6 @@
 'use strict';
 /* Builds the React app (app/) with Vite into the files that are published as an artifact:
- *   index.html  page fragment (claude.ai adds the document around it) that loads brand.js, logic.js, mail.js and app.js
+ *   index.html  page fragment (claude.ai adds the document around it) that loads brand.js, logic.js and app.js
  *   app.js      the app as one self-contained script
  *   app.css     Tailwind's output
  * Usage: node tools/build-app.js [--out-dir <folder>] [--extensions <folder>]   (default app/dist; part of npm run build)

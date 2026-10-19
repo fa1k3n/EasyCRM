@@ -1,5 +1,5 @@
-/* The store over the claude.ai artifact database (window.claude.use('db')), with the same reads and writes as the
- * old kundregister/index.html: collections "customers" and "skipped", and the document "sync/busy". */
+/* The store over the claude.ai artifact database (window.claude.use('db')): collections "customers" and "skipped",
+ * and the document "sync/busy". */
 import type {CustomerDoc, Store} from './store';
 
 type Data = Record<string, unknown>;

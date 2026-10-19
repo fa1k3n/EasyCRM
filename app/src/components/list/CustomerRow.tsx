@@ -6,7 +6,7 @@ import TypeIcon from '../TypeIcon';
 import {useListBadges} from '../../extensions/ExtensionsContext';
 
 /* "idag", "pågår", "imorgon" or "om 12 d" for an event (the logic decides which, this only gives the text) */
-export function whenLabel(e: CustomerEvent): string {
+function whenLabel(e: CustomerEvent): string {
   const w = logic().eventWhen(e);
   return w.kind === 'ongoing' ? t('whenOngoing') : w.kind === 'today' ? t('whenToday') : w.kind === 'tomorrow' ? t('whenTomorrow') : t('whenInDays', {days: w.days});
 }

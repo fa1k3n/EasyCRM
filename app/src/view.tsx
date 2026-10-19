@@ -8,7 +8,7 @@ export type Segment = 'alla' | 'kontakta' | 'bokat' | 'kunder' | 'potentiella';
 export type Sort = 'kontakt' | 'namn' | 'nyast';
 export interface ListView { seg: Segment; type: string; q: string; sort: Sort }
 
-export const SEGMENTS: Segment[] = ['alla', 'kontakta', 'bokat', 'kunder', 'potentiella'];
+const SEGMENTS: Segment[] = ['alla', 'kontakta', 'bokat', 'kunder', 'potentiella'];
 export const SORTS: Sort[] = ['kontakt', 'namn', 'nyast'];
 const KEY = 'crm-view';
 const DEFAULT: ListView = {seg: 'alla', type: 'alla', q: '', sort: 'kontakt'};

@@ -64,7 +64,8 @@ export default function Events({c}: {c: CustomerDoc}) {
   const start = (e: CustomerEvent, kind: MailKind) => {
     if (!mail) return setOpen({kind, e, text: null});
     try {
-      const raw = kind === 'eventfu' ? mail.buildEventFollowUp(frozen(c), e) : mail.buildOffer(frozen(c), e);
+      const helpers = {fmtDate: L.fmtDate, dayMonth: L.dayMonth, signature: L.signature, customerTypes: L.customerTypes};
+      const raw = kind === 'eventfu' ? mail.buildEventFollowUp(frozen(c), e, helpers) : mail.buildOffer(frozen(c), e, helpers);
       setOpen({kind, e, text: L.normalizeMailText(raw)});
     } catch (err) {
       // An error in the extension never stops the app: the event can still be logged without text

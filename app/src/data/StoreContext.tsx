@@ -6,7 +6,7 @@ import {useToast} from '../components/Toast';
 import {t} from '../i18n';
 import type {CustomerDoc, Store} from './store';
 
-export type LoadState = 'unavailable' | 'loading' | 'ready' | 'error';
+type LoadState = 'unavailable' | 'loading' | 'ready' | 'error';
 interface Shared { store: Store | null; state: LoadState; customers: CustomerDoc[]; busy: BusyItem[] | null }
 
 const StoreContext = createContext<Shared>({store: null, state: 'unavailable', customers: [], busy: null});

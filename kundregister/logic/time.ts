@@ -1,11 +1,11 @@
 /* Time: today's date and date formats. The clock can be replaced with setClock(), so the tests get a fixed "today". */
 
-export const MONTHS = ['januari','februari','mars','april','maj','juni','juli','augusti','september','oktober','november','december'];
+const MONTHS = ['januari','februari','mars','april','maj','juni','juli','augusti','september','oktober','november','december'];
 
 let clock: () => Date = () => new Date();
 export const setClock = (fn?: (() => Date) | null): void => { clock = fn || (() => new Date()); };
 const pad = (n: number): string => String(n).padStart(2,'0');
-export const toISO = (d: Date): ISODate => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const toISO = (d: Date): ISODate => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 export const todayISO = (): ISODate => toISO(clock());
 export const daysSince = (iso: ISODate): number => { const t = new Date(todayISO()+'T00:00'); const d = new Date(iso+'T00:00'); return Math.round((t.getTime() - d.getTime())/864e5); };
 export const daysUntil = (iso: ISODate): number => -daysSince(iso);

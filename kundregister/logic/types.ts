@@ -6,8 +6,6 @@
 type ISODate = string;
 /** A customer type's id, e.g. "konsultation"; which ones exist is decided by the brand */
 type ServiceType = string;
-/** An old type value written for older agents, if the brand has rules for it */
-type LegacyType = string;
 
 /* ---------- The brand (brand.json) ---------- */
 interface Sender { id: string; name?: string; company?: string; phone?: string; email?: string; web?: string; /** the lines of the mail signature */ signature: string[]; }
@@ -23,11 +21,6 @@ interface Brand {
   senders: Sender[];
   defaultSender: string;
   customerTypes: CustomerTypeDef[];
-  /** old type values → type ids */
-  legacyTypes?: Record<string, string[]>;
-  /** rules for which old type value is written: the first rule where the customer has any of the types ('*' = any) */
-  legacyWrite?: { type: string; ifAny: string[] }[];
-  legacyDefault?: string;
   /** the app's language, a language code like "sv" (optional; Swedish if missing or unknown) */
   language?: string;
 }
@@ -51,8 +44,6 @@ interface Customer {
   ext?: Record<string, unknown>;
   /** "kund" | "potentiell" */
   status?: string;
-  /** Old type field from older data; translated via the brand's legacyTypes, and written via legacyType if the brand has legacyWrite */
-  type?: string;
   types?: string[]; example?: boolean; createdAt?: string; updatedAt?: string; addedAt?: ISODate;
   comms?: Comm[]; jobs?: Job[]; events?: CustomerEvent[]; bookings?: Booking[]; followUp?: FollowUp | null;
   /** Stored by the app and the agents; the logic works out the last contact itself with lastTouch */

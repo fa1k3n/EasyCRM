@@ -19,10 +19,9 @@ backup/
 !app/tsconfig.json
 !exempel/brand.json
 
-# Ditt företags varumärke (brand.json, bilder, mailtillägg) och publiceringsmappen i den: sparas aldrig i git.
-# Skapa med  Copy-Item exempel profile -Recurse  och säkerhetskopiera den själv.
+# Ditt företags varumärke (brand.json, bilder, tillägg i extensions/) och publiceringsmappen i den: sparas aldrig i git.
+# Skapa med  cp -r exempel profile  och säkerhetskopiera den själv.
 profile/
-varumarke/
 
 # Lokal markering som visar att mappen skrivs av en export; följer aldrig med till git
 .crm-platform

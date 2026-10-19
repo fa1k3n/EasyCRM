@@ -15,9 +15,6 @@ window.TEST_BRAND = {
     {id: 'video', label: 'Video', color: '#6d28d9', icon: 'film'},
     {id: 'live', label: 'Live', color: '#1d4ed8', icon: 'sandning'},
     {id: 'sport', label: 'Sport', color: '#15803d', icon: 'pokal', sender: 'sport'}
-  ],
-  legacyTypes: {headshot: ['cv'], liveprod: ['live'], sport: ['live', 'sport'], ovrigt: []},
-  legacyWrite: [{type: 'sport', ifAny: ['sport']}, {type: 'liveprod', ifAny: ['live', 'video']}, {type: 'headshot', ifAny: ['*']}],
-  legacyDefault: 'ovrigt'
+  ]
 };
 window.CRMLogic.setBrand(window.TEST_BRAND);

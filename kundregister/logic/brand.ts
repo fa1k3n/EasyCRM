@@ -79,17 +79,10 @@ export const getBrand = (): Brand => brand;
 // {id: name} for the brand's customer types, in the brand's order
 export const serviceTypes = (): Record<string, string> => Object.fromEntries(brand.customerTypes.map(t => [t.id, t.label]));
 
-// Customer types (several per customer). Old customers without types are translated from the field type via the brand's legacyTypes.
+// Customer types (several per customer), in the brand's order, without unknown ids
 export function customerTypes(c: Customer): ServiceType[] {
-  const src: string[] = Array.isArray(c.types) ? c.types : ((brand.legacyTypes || {})[c.type as string] || []);
+  const src: string[] = Array.isArray(c.types) ? c.types : [];
   return brand.customerTypes.map(t => t.id).filter(id => src.includes(id));
-}
-// The old type value for agents that still read the field type; only if the brand has rules for it
-export function legacyType(c: Customer): LegacyType | undefined {
-  if (!brand.legacyWrite) return undefined;
-  const t = customerTypes(c);
-  for (const r of brand.legacyWrite) if (r.ifAny.includes('*') ? t.length > 0 : r.ifAny.some(x => t.includes(x))) return r.type;
-  return brand.legacyDefault;
 }
 // The sender for a customer: the first of the customer's types (in the brand's order) with a valid sender, otherwise the default
 export function senderFor(c: Customer): Sender {

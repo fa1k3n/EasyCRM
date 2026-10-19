@@ -63,9 +63,20 @@ for every row on every update, so keep it quick.
 ### Mail texts
 
 `mail` gives the texts for an offer before a customer's event and a follow-up after it:
-`buildOffer(customer, event)` and `buildEventFollowUp(customer, event)`. Each returns
+`buildOffer(customer, event, helpers)` and `buildEventFollowUp(customer, event, helpers)`. Each returns
 `{subject, body, note, tags?, hint?}`. The app shows the text, lets the user change it, and logs the mail when the user
 says it is sent. Mail is never sent by the app. Without a mail extension, offers and follow-ups are logged without text.
+
+`helpers` (`MailHelpers` in `crm-extension-api`) has what a mail text usually needs, so the extension does not depend
+on the app's globals: `fmtDate(iso)` ("27/10 2026"), `dayMonth(iso)` ("27 oktober"), `signature(customer)` (the
+signature of the sender the customer's types give in brand.json) and `customerTypes(customer)` (the type ids).
+
+```ts
+mail: {
+  buildOffer: (c, e, h) => ({subject: `Before ${e.title}`, body: `Hi,\n\nSee you ${h.dayMonth(e.date!)}!\n\n${h.signature(c)}`, note: `Offer before ${e.title}`}),
+  buildEventFollowUp: (c, e, h) => ({subject: `After ${e.title}`, body: `Hi,\n\nHow did it go?\n\n${h.signature(c)}`, note: `Follow-up after ${e.title}`})
+}
+```
 
 ## Styles
 
@@ -87,9 +98,9 @@ call the badge with made-up customers. See `next-step/index.test.tsx`. Never use
 ## Build, preview and publish
 
 ```
-npm run preview -- --react            the app with your extensions and made-up customers
-npm run deploy -- --react             checks brand.json, type-checks and builds your extensions, runs the tests,
-                                      and writes the publish folder (profile/publicera)
+npm run preview                      the app with your extensions and made-up customers
+npm run deploy                       checks brand.json, type-checks and builds your extensions, runs the tests,
+                                     and writes the publish folder (profile/publicera)
 ```
 
 Then publish the publish folder as before.

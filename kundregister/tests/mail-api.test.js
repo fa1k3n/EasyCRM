@@ -1,4 +1,4 @@
-/* Enhetstester för mailtillägget: kontrollen av ett tillägg (window.CRM_MAIL) och
+/* Enhetstester för mailtexterna: kontrollen av ett tilläggs mail (checkMailModule) och
  * loggposterna som skrivs när appen saknar mailtillägg. Tilläggen här är påhittade. */
 (function () {
   const L = window.CRMLogic;
@@ -50,20 +50,5 @@
     });
     test('uppföljning sätter followUpSentAt i stället', () => eq(L.sentPatch(c, 'e2', 'eventfu', m).events.map(e => e.followUpSentAt || null), [null, '2026-10-15']));
     test('kunden ändras inte', () => { L.sentPatch(c, 'e1', 'offer', m); eq(c.comms.length, 1); eq(c.events[0].offeredAt, undefined); });
-  });
-
-  describe('Mailtillägg: logikens hjälpfunktioner enligt kontraktet (CrmLogicForMail i mail-api.d.ts)', () => {
-    test('fmtDate, dayMonth, signature och customerTypes finns och ger text/lista', () => {
-      eq(L.fmtDate('2026-11-05'), '05/11 2026');
-      eq(L.dayMonth('2026-11-05'), '5 november');
-      eq(typeof L.signature({}), 'string');
-      ok(Array.isArray(L.customerTypes({})), 'customerTypes ger en lista');
-    });
-  });
-
-  describe('Mailtillägg: den generiska logiken har inga mailtexter', () => {
-    test('buildOffer, buildEventFollowUp, eventKind, OFFERS och isSport finns inte i logiken', () => {
-      for (const k of ['buildOffer', 'buildEventFollowUp', 'eventKind', 'OFFERS', 'isSport']) eq(typeof L[k], 'undefined', k);
-    });
   });
 })();

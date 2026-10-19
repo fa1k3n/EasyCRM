@@ -3,7 +3,8 @@
 import {addDays, daysSince, todayISO} from './time';
 
 export const KINDS: Record<string, string> = {mail_ut:'Mail skickat', mail_in:'Mail mottaget', samtal:'Samtal', mote:'Möte', ovrigt:'Övrigt'};
-export const LIMIT = 90, WARN = 60;
+const WARN = 60;
+export const LIMIT = 90;
 export const INV_STATUS: Record<string, string> = {published:'Skickad', paid:'Betald', overPaid:'Överbetald', underPaid:'Delbetald', overdue:'Förfallen', credited:'Krediterad', credit:'Kreditnota'};
 
 // The latest contact up to today: the newest logged contact or job

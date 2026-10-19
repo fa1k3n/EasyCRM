@@ -28,13 +28,13 @@ describe('tools/build-app.js', () => {
     expect(html).toMatch('<link rel="stylesheet" href="app.css">');
   });
 
-  test('the brand, the logic and the optional mail plugin load before the app, as plain scripts', () => {
+  test('the brand and the logic load before the app, as plain scripts', () => {
     const html = read('index.html');
     const at = s => html.indexOf(`<script src="${s}"></script>`);
-    for (const s of ['brand.js', 'logic.js', 'mail.js', 'app.js']) expect(at(s)).toBeGreaterThan(-1);
+    for (const s of ['brand.js', 'logic.js', 'app.js']) expect(at(s)).toBeGreaterThan(-1);
     expect(at('brand.js')).toBeLessThan(at('logic.js'));
-    expect(at('logic.js')).toBeLessThan(at('mail.js'));
-    expect(at('mail.js')).toBeLessThan(at('app.js'));
+    expect(at('logic.js')).toBeLessThan(at('app.js'));
+    expect(html).not.toMatch('mail.js');
     expect(html).not.toMatch('type="module"');
   });
 

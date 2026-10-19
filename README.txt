@@ -20,7 +20,7 @@ Kräver Node 24 (https://nodejs.org) och git, på Windows, macOS eller Linux.
 1. Klona repot och installera npm-paketen (TypeScript, jest och playwright) i repots mapp:
      npm ci
 2. Skapa din varumärkesmapp från exemplet (i repots mapp):
-     Copy-Item exempel profile -Recurse
+     cp -r exempel profile
 3. Fyll i profile\brand.json (fälten är förklarade i filen) och byt logo.svg mot din logga
    (png, svg, jpg eller webp, högst 1 MB).
 4. Förhandsvisa med påhittade kunder (använder profile\ automatiskt):
@@ -30,8 +30,8 @@ Kräver Node 24 (https://nodejs.org) och git, på Windows, macOS eller Linux.
      npm run deploy
    (Med  npm run deploy -- --brand <mapp>  kan du använda en annan varumärkesmapp.)
 6. Be Claude (Claude Code) publicera profile\publicera som en artifact:
-   - index.html som sidan och de andra filerna (app.js, app.css, logic.js, brand.js, loggan,
-     ev. mail.js) bredvid.
+   - index.html som sidan och de andra filerna (app.js, app.css, logic.js, brand.js och
+     loggan) bredvid.
    - Databasen: capability db med regeln path "", read "admin", write "admin", så att bara du
      kommer åt kunderna.
    - Vid en ny version: publicera till samma artifact, läs först den publicerade versionen och
@@ -41,9 +41,6 @@ profile\ sparas inte i git och har ingen versionshistorik: säkerhetskopiera den
 t.ex. tillsammans med databasen.
 
 Valfritt i varumärkesmappen:
-- mail\mail.ts + mail\tsconfig.json: ett mailtillägg som skriver färdiga erbjudande- och
-  uppföljningsmail (window.CRM_MAIL, kontraktet finns i kundregister\mail-api.d.ts). Utan
-  tillägg loggar appen erbjudanden och uppföljningar utan färdig text.
 - extensions\: tillägg till appen: egna sektioner på
   kundkortet, märken i kundlistan och färdiga mailtexter. Hur man skriver, testar, bygger och
   publicerar ett tillägg står (på engelska) i exempel\extensions\README.md, med exemplet
@@ -55,15 +52,12 @@ Innehåll
 app\                           Appen i React + TSX + Tailwind (byggs med npm run build, provas med
                                npm run preview och publiceras med npm run deploy). Tilläggs-API:t
                                finns i app\src\extensions\api.ts
-kundregister\index.html        Den tidigare appen i en fil. Finns kvar som reserv:
-                               npm run preview:legacy och npm run deploy:legacy
 kundregister\logic\            Ren logik i TypeScript, en modul per område: datum, kontaktstatus
                                (60/90 dagar), filter, sortering, event, kalenderposter, varumärke
                                och färger. types.ts beskriver datamodellen, index.ts är API:t.
 kundregister\logic.js          Byggd från logic/ (ändra aldrig för hand). Används av appen.
-kundregister\mail-api.d.ts     Kontraktet för ett mailtillägg
 kundregister\tsconfig.json     Inställningar för TypeScript
-kundregister\tests\            Enhetstester för logiken (npx jest, eller öppna run.html i en webbläsare)
+kundregister\tests\            Enhetstester för logiken (körs med jest)
 exempel\                       Exempel på varumärke (brand.json och logga) och exempeltillägget
                                (extensions\, med README.md om hur man skriver tillägg)
 tests\                         Tester för TypeScript-bygget, React-appens bygge,
@@ -71,13 +65,13 @@ tests\                         Tester för TypeScript-bygget, React-appens bygge
 tools\build-app.js             Bygger React-appen (app\) med Vite till app.js, app.css och sidan
                                index.html (en del av npm run build)
 tools\build.js                 Bygger logic/ till logic.js med TypeScript 6.0.3 från npm
-                               (npm run build; --project <mapp> bygger t.ex. ett mailtillägg)
+                               (npm run build; --project <mapp> bygger en annan mapp med tsconfig.json)
 package.json                   npm-projektet: exakta versioner av verktygen och paketen
                                (typescript, jest, playwright, react, vite, tailwind m.fl.)
 tools\preview.js               Förhandsvisar appen lokalt med påhittade kunder (npm run preview)
 tools\deploy.js                Kontrollerar ett varumärke (brand.json), kör testerna och sätter
                                ihop publiceringsmappen (index.html, app.js, app.css, logic.js,
-                               brand.js, bilder, ev. mail.js)
+                               brand.js och bilder)
 .github\workflows\ci.yml       GitHub Actions: alla tester vid varje push
 
 Köra testerna
@@ -87,8 +81,4 @@ Köra testerna
 
 Först byggs och typkontrolleras logic/ och React-appen, sedan körs alla tester med jest:
 logikens tester (i jsdom), React-appens komponenttester och verktygens tester. Testerna har ett fast "idag" (2026-10-15), så resultatet
-beror inte på vilken dag de körs. Du kan också öppna kundregister\tests\run.html direkt i
-webbläsaren.
-
-Har du en mapp varumarke\ från en äldre version? Byt namn på den till profile\ (den
-gamla mappen fungerar tills vidare, men deploy och förhandsvisningen påminner om bytet).
+beror inte på vilken dag de körs.

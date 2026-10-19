@@ -16,6 +16,8 @@ export interface CRMLogicApi {
   KINDS: Record<string, string>;
   BOOKING_KINDS: Record<string, string>;
   fmtDate(iso?: string | null): string;
+  dayMonth(iso: string): string;
+  signature(c: Customer): string;
   daysUntil(iso: string): number;
   status(c: Customer): ContactStatus;
   needsContact(c: Customer): boolean;

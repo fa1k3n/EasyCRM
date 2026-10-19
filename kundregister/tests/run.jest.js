@@ -1,6 +1,6 @@
-/* Runs the browser tests in jest (jsdom), exactly like run.html: the files are loaded as classic scripts in the same
- * order and share one global scope. harness.js provides eq/ok/includes/excludes; its own describe/test are replaced
- * by jest's, so every test in logic.test.js, brand.test.js and mail-api.test.js becomes a jest test.
+/* Runs the logic's tests in jest (jsdom): the files are loaded as classic scripts in this order and share one global
+ * scope. harness.js provides eq/ok/includes/excludes, and every test in logic.test.js, brand.test.js and
+ * mail-api.test.js registers with jest's describe/test.
  * The test files themselves are not changed. */
 const fs = require('fs');
 const path = require('path');
@@ -20,9 +20,4 @@ function loadScript(rel) {
   if (error) throw new Error(`${rel}: ${error.message}`);
 }
 
-const jestApi = {describe: global.describe, test: global.test};
-for (const rel of FILES) {
-  loadScript(rel);
-  // harness.js sets its own describe/test; the tests should register with jest instead
-  if (rel === 'harness.js') Object.assign(window, jestApi);
-}
+for (const rel of FILES) loadScript(rel);

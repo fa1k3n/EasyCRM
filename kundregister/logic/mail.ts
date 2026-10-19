@@ -6,8 +6,7 @@ import {fmtDate, todayISO} from './time';
 
 // The mail signature comes from the customer's sender in the brand
 export const signature = (c: Customer): string => senderFor(c).signature.join('\n');
-// Ready mail texts come from a plugin (an extension's mail, or window.CRM_MAIL from mail.js); this checks it is complete.
-// The contract (the types) the plugin is built against is in mail-api.d.ts.
+// Ready mail texts come from an extension's mail (app/src/extensions/api.ts); this checks it is complete.
 export function checkMailModule(m: unknown): string[] {
   if (!m || typeof m !== 'object') return ['mailtillägget saknas eller är inte ett objekt'];
   const mod = m as Record<string, unknown>;

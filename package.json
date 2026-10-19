@@ -8,10 +8,8 @@
   },
   "scripts": {
     "build": "node tools/build.js && node tools/build.js --project app && node tools/build-app.js",
-    "deploy": "node tools/deploy.js --react",
-    "deploy:legacy": "node tools/deploy.js",
-    "preview": "node tools/preview.js --react",
-    "preview:legacy": "node tools/preview.js",
+    "deploy": "node tools/deploy.js",
+    "preview": "node tools/preview.js",
     "test": "npm run build && jest"
   },
   "devDependencies": {

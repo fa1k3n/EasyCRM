@@ -90,12 +90,11 @@ describe('the customer form and the status change', () => {
     expect(r.patch).toMatchObject({company: 'Exempel AB', name: '', role: 'VD', email: 'a@exempel.se', notes: 'Hej', status: 'kund', types: ['x']});
     expect(L().customerFormPatch({company: ' ', name: '', status: 'kund', types: []}).errors).toEqual(['companyOrName']);
   });
-  test('customerFormPatch writes the old type field only when the brand asks for it (legacyWrite)', () => {
+  test('customerFormPatch never writes type, even for a brand.json with the old legacyWrite', () => {
     L().setBrand({company: {name: 'X'}, colors: {accent: '#0f766e', ink: '#1f2933', bg: '#f6f7f7'}, senders: [{id: 's', signature: ['X']}], defaultSender: 's',
       customerTypes: [{id: 'a', label: 'A', color: '#111111'}], legacyWrite: [{type: 'gammal', ifAny: ['a']}]} as unknown as Brand);
-    expect(L().customerFormPatch({company: 'X', status: 'kund', types: ['a']}).patch.type).toBe('gammal');
+    expect('type' in L().customerFormPatch({company: 'X', status: 'kund', types: ['a']}).patch).toBe(false);
     L().setBrand(null);
-    expect('type' in L().customerFormPatch({company: 'X', status: 'kund', types: []}).patch).toBe(false);
   });
 });
 
@@ -149,4 +148,20 @@ describe('events and drafts (step 2.12)', () => {
     expect('events' in plain).toBe(false);
     expect(plain.comms![0].note).toBe('Mail skickat från utkast');
   });
+});
+
+test('the public API has no exports that nothing uses', () => {
+  for (const name of ['esc', 'WARN', 'MONTHS', 'contactScore']) expect(name in L()).toBe(false);
+});
+
+test('customerTypes reads only types: the old field type gives no types, and legacyType is gone', () => {
+  L().setBrand({company: {name: 'X'}, colors: {accent: '#0f766e', ink: '#1f2933', bg: '#f6f7f7'}, senders: [{id: 's', signature: ['X']}], defaultSender: 's',
+    customerTypes: [{id: 'a', label: 'A', color: '#111111'}], legacyTypes: {gammal: ['a']}} as unknown as Brand);
+  try {
+    expect(L().customerTypes({type: 'gammal'} as unknown as Customer)).toEqual([]);
+    expect(L().customerTypes({types: ['a']})).toEqual(['a']);
+    expect('legacyType' in L()).toBe(false);
+  } finally {
+    L().setBrand(null);
+  }
 });

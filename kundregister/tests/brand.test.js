@@ -8,10 +8,7 @@
     colors: {accent: '#0f766e', ink: '#1f2933', bg: '#f6f7f7'},
     senders: [{id: 's1', signature: ['Ett', 'Två']}, {id: 's2', signature: ['Tre']}],
     defaultSender: 's1',
-    customerTypes: [{id: 'a', label: 'A', color: '#111111'}, {id: 'b', label: 'B', color: '#222222', sender: 's2'}, {id: 'c', label: 'C', color: '#333333', sender: 'finns-inte'}],
-    legacyTypes: {gammal: ['b']},
-    legacyWrite: [{type: 'x', ifAny: ['a']}],
-    legacyDefault: 'y'
+    customerTypes: [{id: 'a', label: 'A', color: '#111111'}, {id: 'b', label: 'B', color: '#222222', sender: 's2'}, {id: 'c', label: 'C', color: '#333333', sender: 'finns-inte'}]
   };
   const HEX = /^#[0-9a-f]{6}$/;
 
@@ -32,18 +29,8 @@
 
   describe('Varumärke: kundtyper', () => {
     test('typerna följer varumärkets ordning, utan dubbletter och okända värden', () => withBrand(B2, () => eq(L.customerTypes({types: ['b', 'x', 'a', 'b']}), ['a', 'b'])));
-    test('gamla type-värden översätts med varumärkets legacyTypes', () => withBrand(B2, () => {
-      eq(L.customerTypes({type: 'gammal'}), ['b']);
-      eq(L.customerTypes({type: 'okand'}), []);
-    }));
-    test('utan legacyTypes ger gamla type-värden inga typer', () => withBrand(null, () => eq(L.customerTypes({type: 'headshot'}), [])));
-    test('legacyType följer varumärkets regler och standardvärde', () => withBrand(B2, () => {
-      eq(L.legacyType({types: ['a']}), 'x');
-      eq(L.legacyType({types: ['b']}), 'y');
-    }));
-    test('utan legacyWrite skrivs inget gammalt typvärde', () => withBrand(null, () => eq(L.legacyType({types: ['projekt']}), undefined)));
     test('filtret på kundtyp använder varumärkets typer', () => withBrand(B2, () => {
-      const list = [{id: '1', types: ['a']}, {id: '2', types: ['b']}, {id: '3', type: 'gammal'}];
+      const list = [{id: '1', types: ['a']}, {id: '2', types: ['b']}, {id: '3', types: ['b']}];
       eq(L.filterCustomers(list, {seg: 'alla', type: 'b', q: '', sort: 'namn'}).map(c => c.id).sort(), ['2', '3']);
     }));
     test('typeColors ger ljus och mörk färg per typ', () => withBrand(B2, () => {
