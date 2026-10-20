@@ -59,6 +59,9 @@ Optional in the brand folder:
   the customer list and ready-made mail texts. How to write, test, build and publish an
   extension is described in example/extensions/README.md, with the example "Next step" in
   example/extensions/next-step/. If you do not want the example: delete the folder.
+- integrations/: integration plugins that bring data from other services (e.g. invoices) into
+  the register, run with  npm run integration -- <id> --url <server>  (a dry run unless
+  --apply). See example/integrations/README.md and the example example-invoices.
 - run-tests.js: tests of your own, run by deploy as  node run-tests.js --repo <repo>.
 
 Contents
@@ -94,6 +97,8 @@ tools/build-server.js          Builds the REST API (server/) with Vite into serv
 tools/serve.js                 The app and the REST API on localhost (npm run serve)
 tools/data.js                  Moves data between a backup folder, a JSON file and the REST API
 tools/cloudflare.js            Assembles the app and the API for Cloudflare (npm run cloudflare)
+tools/integration.js           Runs an integration plugin (npm run integration); its contract is
+                               tools/integration-api.ts
 tools/deploy.js                Checks a brand (brand.json), runs the tests and assembles the
                                publish folder (index.html, app.js, app.css, logic.js, brand.js
                                and images)

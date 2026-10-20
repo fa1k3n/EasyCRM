@@ -122,5 +122,5 @@ async function main(argv) {
   }
 }
 
-module.exports = {pack, unpack};
+module.exports = {pack, unpack, request, accessHeaders};
 if (require.main === module) main(process.argv.slice(2)).then(code => { process.exitCode = code; });

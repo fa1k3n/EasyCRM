@@ -12,6 +12,7 @@
     "preview": "node tools/preview.js",
     "serve": "npm run build && node tools/serve.js",
     "cloudflare": "npm run build && node tools/cloudflare.js",
+    "integration": "node tools/integration.js",
     "test": "npm run build && jest"
   },
   "devDependencies": {
