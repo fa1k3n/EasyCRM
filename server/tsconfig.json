@@ -1,0 +1,15 @@
+{
+  "//": "Type check of the REST API (npm run build). Vite builds it (tools/build-server.js); this config only checks types. The logic (crm/logic/) is included for the shared data model types.",
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts", "../crm/logic/*.ts"]
+}

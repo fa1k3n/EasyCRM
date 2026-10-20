@@ -1,5 +1,6 @@
 /* The store over the claude.ai artifact database (window.claude.use('db')): collections "customers" and "skipped",
  * and the document "sync/busy". */
+import {logic} from '../logic';
 import type {CustomerDoc, Store} from './store';
 
 type Data = Record<string, unknown>;
@@ -40,8 +41,8 @@ export async function createArtifactStore(claude: ClaudeRuntime | undefined = (w
     },
     async createCustomer(data) {
       const ref = customers.doc();
-      // The same starting values as the old app (they always win), so that every new customer has the lists the logic expects
-      await ref.set({...data, jobs: [], comms: [], lastContact: null, createdAt: now(), updatedAt: now()});
+      // The logic's starting values (they always win), so that every new customer has the lists the logic expects
+      await ref.set({...data, ...logic().newCustomerDefaults(now())});
       return ref.id;
     },
     async updateCustomer(id, patch) {

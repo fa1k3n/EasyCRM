@@ -11,6 +11,7 @@ export interface CRMLogicApi {
   typeColors(): Record<string, {light: string; dark: string}>;
   deriveColors(colors: BrandColors): DerivedColors;
   validateBrand(b: Brand): string[];
+  newCustomerDefaults(at: string): Partial<Customer>;
   setClock(fn?: (() => Date) | null): void;
   readonly SERVICE_TYPES: Record<string, string>;
   KINDS: Record<string, string>;

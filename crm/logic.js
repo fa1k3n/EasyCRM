@@ -316,6 +316,18 @@
 		...e,
 		dismissed
 	} : e) });
+	function calendarConflicts(customers, busy) {
+		const out = [];
+		for (const c of customers) for (const e of upcomingEvents(c)) {
+			const conflicts = e.id ? eventConflicts(e, customers, busy) : [];
+			if (conflicts.length) out.push({
+				customerId: c.id,
+				eventId: e.id,
+				conflicts
+			});
+		}
+		return out;
+	}
 	var KIND_IDS = [
 		"jobb",
 		"mote",
@@ -818,6 +830,27 @@
 			errors: patch.company || patch.name ? [] : ["companyOrName"]
 		};
 	};
+	var addItemPatch = (c, list, item) => list === "comms" ? addCommPatch(c, item) : list === "jobs" ? addJobPatch(c, item) : list === "bookings" ? addBookingPatch(c, item) : addEventPatch(c, item);
+	var replaceItemPatch = (c, list, item) => {
+		const items = (c[list] || []).map((x) => x.id === item.id ? item : x);
+		if (list !== "comms" && list !== "jobs") return { [list]: items };
+		const comms = list === "comms" ? items : c.comms || [], jobs = list === "jobs" ? items : c.jobs || [];
+		return {
+			[list]: items,
+			lastContact: lastTouch({
+				comms,
+				jobs
+			})
+		};
+	};
+	var removeItemPatch = (c, list, id) => list === "comms" ? removeCommPatch(c, id) : list === "jobs" ? removeJobPatch(c, id) : list === "bookings" ? removeBookingPatch(c, id) : { events: (c.events || []).filter((e) => e.id !== id) };
+	var newCustomerDefaults = (at) => ({
+		jobs: [],
+		comms: [],
+		lastContact: null,
+		createdAt: at,
+		updatedAt: at
+	});
 	var safeUrl = (u) => /^https?:\/\//i.test(u || "") ? u : u && /^[\w.-]+\.[a-z]{2,}/i.test(u) ? "https://" + u : null;
 	var hostOf = (u) => {
 		try {
@@ -884,13 +917,10 @@
 	}
 	function sentPatch(c, eventId, kind, m) {
 		const comms = [...c.comms || [], m];
-		const field = kind === "eventfu" ? "followUpSentAt" : "offeredAt";
+		const { events } = markEventPatch(c, eventId, kind, m.date);
 		return {
 			comms,
-			events: (c.events || []).map((x) => x.id === eventId ? {
-				...x,
-				[field]: m.date
-			} : x),
+			events,
 			lastContact: lastTouch({
 				comms,
 				jobs: c.jobs || []
@@ -900,6 +930,13 @@
 				subject: m.subject
 			}
 		};
+	}
+	function markEventPatch(c, eventId, kind, date) {
+		const field = kind === "eventfu" ? "followUpSentAt" : "offeredAt";
+		return { events: (c.events || []).map((x) => x.id === eventId ? {
+			...x,
+			[field]: date
+		} : x) };
 	}
 	function draftSentPatch(c, id) {
 		const d = c.draft || {};
@@ -948,6 +985,172 @@
 				when
 			})
 		};
+	}
+	var isObject = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+	var DATE = /^\d{4}-\d{2}-\d{2}/;
+	var text = (v, path, issues) => {
+		if (typeof v !== "string") issues.push({
+			path,
+			message: "must be text"
+		});
+	};
+	var bool = (v, path, issues) => {
+		if (typeof v !== "boolean") issues.push({
+			path,
+			message: "must be true or false"
+		});
+	};
+	var num = (v, path, issues) => {
+		if (typeof v !== "number" || !Number.isFinite(v)) issues.push({
+			path,
+			message: "must be a number"
+		});
+	};
+	var date = (v, path, issues) => {
+		if (typeof v !== "string" || !DATE.test(v)) issues.push({
+			path,
+			message: "must be a date YYYY-MM-DD"
+		});
+	};
+	var textOrNumber = (v, path, issues) => {
+		if (typeof v !== "string" && (typeof v !== "number" || !Number.isFinite(v))) issues.push({
+			path,
+			message: "must be text or a number"
+		});
+	};
+	var oneOf = (...allowed) => (v, path, issues) => {
+		if (!allowed.includes(v)) issues.push({
+			path,
+			message: `must be one of: ${allowed.join(", ")}`
+		});
+	};
+	var anyObject = (v, path, issues) => {
+		if (!isObject(v)) issues.push({
+			path,
+			message: "must be an object"
+		});
+	};
+	var object = (fields) => (v, path, issues) => {
+		if (!isObject(v)) {
+			issues.push({
+				path,
+				message: "must be an object"
+			});
+			return;
+		}
+		for (const [key, value] of Object.entries(v)) {
+			if (value === null || value === void 0 || !Object.prototype.hasOwnProperty.call(fields, key)) continue;
+			fields[key](value, path ? `${path}.${key}` : key, issues);
+		}
+	};
+	var list = (item) => (v, path, issues) => {
+		if (!Array.isArray(v)) {
+			issues.push({
+				path,
+				message: "must be a list"
+			});
+			return;
+		}
+		v.forEach((x, i) => item(x, `${path}[${i}]`, issues));
+	};
+	var COMM = object({
+		id: text,
+		kind: text,
+		date,
+		subject: text,
+		note: text,
+		body: text,
+		gmailId: text,
+		bookingId: text
+	});
+	var JOB = object({
+		id: text,
+		title: text,
+		date,
+		amount: textOrNumber,
+		invoiceUrl: text,
+		invoiceNumber: textOrNumber,
+		invoiceStatus: text,
+		dueDate: date
+	});
+	var EVENT = object({
+		id: text,
+		title: text,
+		date,
+		endDate: date,
+		location: text,
+		url: text,
+		sourceLabel: text,
+		why: text,
+		source: text,
+		foundAt: text,
+		dismissed: bool,
+		offeredAt: text,
+		followUpSentAt: text
+	});
+	var BOOKING = object({
+		id: text,
+		kind: text,
+		title: text,
+		date,
+		time: text,
+		durationMin: num,
+		location: text,
+		source: text,
+		gcalEventId: text
+	});
+	var CUSTOMER = object({
+		id: text,
+		company: text,
+		name: text,
+		role: text,
+		email: text,
+		phone: text,
+		website: text,
+		city: text,
+		notes: text,
+		ext: anyObject,
+		status: oneOf("kund", "potentiell"),
+		types: list(text),
+		example: bool,
+		createdAt: text,
+		updatedAt: text,
+		addedAt: date,
+		comms: list(COMM),
+		jobs: list(JOB),
+		events: list(EVENT),
+		bookings: list(BOOKING),
+		followUp: object({
+			date,
+			note: text
+		}),
+		lastContact: date,
+		lastMail: object({
+			date,
+			subject: text
+		}),
+		lastJob: object({
+			title: text,
+			date
+		}),
+		draft: object({
+			subject: text,
+			body: text,
+			summary: text,
+			eventId: text,
+			kind: text
+		}),
+		eventsCheckedAt: text,
+		source: text,
+		why: text,
+		contactSource: text,
+		emailConfidence: oneOf("publicerad", "gissad")
+	});
+	/** The issues in a customer document, in the document's field order; an empty list = valid. path "" = the document itself */
+	function validateCustomer(doc) {
+		const issues = [];
+		CUSTOMER(doc, "", issues);
+		return issues;
 	}
 	return {
 		LIMIT: 90,
@@ -1005,6 +1208,13 @@
 		eventConflicts,
 		eventBadge,
 		customerTypes,
+		validateCustomer,
+		newCustomerDefaults,
+		calendarConflicts,
+		addItemPatch,
+		replaceItemPatch,
+		removeItemPatch,
+		markEventPatch,
 		EXAMPLE_BRAND,
 		setBrand,
 		getBrand,

@@ -4,6 +4,7 @@
  * The React app (app/) is built with tools/build-app.js, with the brand folder's extensions/ if it has any.
  * Without --brand, profile/ in the repo root is used if it has a brand.json, otherwise the default brand
  * (the example company in logic.js). Then open <out-dir>/preview.html in the browser; its path is printed.
+ * buildPreview({api: true}) writes index.html without the fake database instead, for the REST API (tools/serve.js).
  * Exit code 0 = the preview is written, 1 = error. */
 const fs = require('fs');
 const os = require('os');
@@ -25,8 +26,9 @@ function parseArgs(argv) {
 
 /* Writes preview.html (the React app's page fragment with the fake database loaded first), app.js, app.css, logic.js, the stub, the example logo and,
  * with a brand, brand.js (window.BRAND) and the brand's images, just like publishing.
- * Returns the path of preview.html. */
-function buildPreview({outDir, brand}) {
+ * With api: index.html without the fake database and its stub (the app then talks to the REST API on the same address).
+ * Returns the path of the page. */
+function buildPreview({outDir, brand, api = false}) {
   if (!brand && fs.existsSync(path.join(ROOT, 'profile', 'brand.json'))) brand = path.join(ROOT, 'profile');
   if (brand && !fs.existsSync(path.join(brand, 'brand.json'))) throw new Error(`Cannot find brand.json in ${brand}`);
   fs.mkdirSync(outDir, {recursive: true});
@@ -34,10 +36,12 @@ function buildPreview({outDir, brand}) {
   const page = buildReactPage(outDir, brand);
   const html = '<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">' +
     '<style>body{margin:0}[hidden]{display:none!important}</style>' +
-    '<script src="preview-stub.js"></script></head><body>\n' + page + '\n</body></html>';
-  fs.writeFileSync(path.join(outDir, 'preview.html'), html, 'utf8');
+    (api ? '' : '<script src="preview-stub.js"></script>') + '</head><body>\n' + page + '\n</body></html>';
+  const file = path.join(outDir, api ? 'index.html' : 'preview.html');
+  fs.writeFileSync(file, html, 'utf8');
   fs.copyFileSync(path.join(ROOT, 'crm', 'logic.js'), path.join(outDir, 'logic.js'));
-  fs.copyFileSync(path.join(ROOT, 'tools', 'preview-stub.js'), path.join(outDir, 'preview-stub.js'));
+  if (api) fs.rmSync(path.join(outDir, 'preview-stub.js'), {force: true});
+  else fs.copyFileSync(path.join(ROOT, 'tools', 'preview-stub.js'), path.join(outDir, 'preview-stub.js'));
   fs.copyFileSync(path.join(ROOT, 'crm', 'logo.svg'), path.join(outDir, 'logo.svg'));
   fs.rmSync(path.join(outDir, 'brand.js'), {force: true});
   if (brand) {
@@ -47,7 +51,7 @@ function buildPreview({outDir, brand}) {
       if (e.isFile() && IMAGES.includes(path.extname(e.name).toLowerCase())) fs.copyFileSync(path.join(brand, e.name), path.join(outDir, e.name));
     }
   }
-  return path.join(outDir, 'preview.html');
+  return file;
 }
 
 /* Builds the React app (with the brand folder's extensions/, if any) into a temporary folder, copies app.js and

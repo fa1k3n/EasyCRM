@@ -7,17 +7,20 @@ import {
   EXAMPLE_BRAND, OWN_ICONS, brandFonts, customerTypes, getBrand, googleFontsUrl, senderFor, senderHint, serviceTypes,
   setBrand, typeColors, typeIcon, validateBrand
 } from './brand';
-import {addCommPatch, addJobPatch, customerFormPatch, removeCommPatch, removeJobPatch, statusPatch} from './card';
+import {
+  addCommPatch, addItemPatch, addJobPatch, customerFormPatch, newCustomerDefaults, removeCommPatch, removeItemPatch, removeJobPatch, replaceItemPatch, statusPatch
+} from './card';
 import {contrastRatio, deriveColors} from './colors';
 import {LIMIT, contactDeadline, daysLabel, invoiceStatuses, kinds, lastTouch, latestMail, needsContact, status} from './contact';
 import {
-  addEventPatch, dismissEventPatch, eventBadge, eventConflicts, eventOpen, eventSoon, eventWhen, eventsToFollowUp, hasEvent,
+  addEventPatch, calendarConflicts, dismissEventPatch, eventBadge, eventConflicts, eventOpen, eventSoon, eventWhen, eventsToFollowUp, hasEvent,
   hiddenEvents, isNewEvent, nextEvent, openEvents, upcomingEvents
 } from './events';
 import {filterCustomers, segmentCounts, skipKey} from './list';
-import {checkMailModule, draftSentPatch, logOnlyEntry, normalizeMailText, sentPatch, signature} from './mail';
+import {checkMailModule, draftSentPatch, logOnlyEntry, markEventPatch, normalizeMailText, sentPatch, signature} from './mail';
 import {hostOf, safeUrl} from './text';
 import {addDays, dayMonth, daysSince, daysUntil, fmtDate, setClock, todayISO} from './time';
+import {validateCustomer} from './validate';
 
 export default {
   LIMIT,
@@ -34,6 +37,7 @@ export default {
   statusPatch, customerFormPatch, OWN_ICONS, typeIcon,
   daysUntil, nextEvent, eventSoon, eventsToFollowUp, eventConflicts,
   eventBadge, customerTypes,
+  validateCustomer, newCustomerDefaults, calendarConflicts, addItemPatch, replaceItemPatch, removeItemPatch, markEventPatch,
   EXAMPLE_BRAND, setBrand, getBrand, validateBrand, senderHint, brandFonts, googleFontsUrl, senderFor, typeColors, deriveColors, contrastRatio,
   // {id: name} for the current brand's customer types (worked out again when the brand changes)
   get SERVICE_TYPES() { return serviceTypes(); },

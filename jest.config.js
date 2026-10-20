@@ -1,7 +1,8 @@
 /* jest settings. Three groups of tests:
  * - app: the logic's browser tests (crm/tests), loaded as scripts by run.jest.js in jsdom
  * - ui: the React app's component tests (app/src/**\/*.test.ts(x)), TSX compiled by Babel, in jsdom
- * - tools: the tools' tests in tests/*.test.js, run in Node */
+ * - tools: the tools' tests in tests/*.test.js, run in Node
+ * - server: the REST API's tests (server/test/*.test.ts), TypeScript compiled by Babel, in Node */
 const babel = ['babel-jest', {
   configFile: false,
   babelrc: false,
@@ -19,6 +20,7 @@ module.exports = {
       transform: {'\\.[jt]sx?$': babel},
       moduleNameMapper: {'\\.css$': '<rootDir>/app/test/style-stub.js', '^virtual:crm-extensions$': '<rootDir>/app/test/no-extensions.js'}
     },
-    {displayName: 'tools', testEnvironment: 'node', testMatch: ['<rootDir>/tests/**/*.test.js']}
+    {displayName: 'tools', testEnvironment: 'node', testMatch: ['<rootDir>/tests/**/*.test.js']},
+    {displayName: 'server', testEnvironment: 'node', testMatch: ['<rootDir>/server/test/**/*.test.ts'], transform: {'\\.[jt]sx?$': babel}}
   ]
 };

@@ -18,6 +18,7 @@ backup/
 !crm/tsconfig.json
 !app/tsconfig.json
 !example/brand.json
+!server/tsconfig.json
 
 # Your company's brand (brand.json, images, extensions in extensions/) and its publish folder: never saved in git.
 # Create it with  cp -r example profile  and back it up yourself.
@@ -33,6 +34,13 @@ publish/
 node_modules/
 # The React app's build (npm run build creates it)
 app/dist/
+# The REST API's build (npm run build) and the local server's database (kept in profile/data/)
+server/dist/
+# wrangler's local state (wrangler dev, the Cloudflare tests)
+.wrangler/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
 
 # Temporary files
 *.tmp

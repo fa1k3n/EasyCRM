@@ -6,6 +6,9 @@ const fs = require('fs');
 const path = require('path');
 
 const FILES = ['../logic.js', 'harness.js', 'test-brand.js', 'logic.test.js', 'brand.test.js', 'mail-api.test.js'];
+// Added later (a new line, so the list above is unchanged)
+FILES.push('validate.test.js');
+FILES.push('item-patches.test.js');
 
 // Runs a file as a <script>, like the browser does; an error in it fails the whole run instead of disappearing.
 function loadScript(rel) {

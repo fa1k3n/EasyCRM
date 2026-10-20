@@ -3,7 +3,7 @@ import {createRoot} from 'react-dom/client';
 import extensions from 'virtual:crm-extensions';
 import App from './App';
 import {applyBrand} from './brand';
-import {createArtifactStore} from './data/artifactStore';
+import {connectStore} from './data/connect';
 import {t} from './i18n';
 import './styles.css';
 
@@ -20,14 +20,15 @@ export function renderApp(root: HTMLElement) {
   // The brand is applied before the first render, so the page never flashes in the wrong colours
   const brand = applyBrand();
   const app = createRoot(root);
-  const show = (store?: Awaited<ReturnType<typeof createArtifactStore>>, connectFailed = false) => app.render(
+  const show = (store?: Awaited<ReturnType<typeof connectStore>>, connectFailed = false) => app.render(
     <StrictMode>
       <App brand={brand} store={store} connectFailed={connectFailed} extensions={extensions} />
     </StrictMode>
   );
   show(); // the shell at once, "loading" until the database answers
-  // If connecting fails the app shows the connection error, instead of loading forever
-  createArtifactStore().then(store => show(store), () => show(null, true));
+  // The artifact database on claude.ai, otherwise the REST API; if connecting fails the app shows the connection
+  // error, instead of loading forever
+  connectStore().then(store => show(store), () => show(null, true));
 }
 
 const root = document.getElementById('root');

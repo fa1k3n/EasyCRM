@@ -24,9 +24,13 @@ export function normalizeMailText(o: unknown): {subject: string; body: string; n
 // What is saved when a mail (ready or only logged) is marked as sent: the contact log, the event's mark and the latest contact
 export function sentPatch(c: Customer, eventId: string, kind: 'offer' | 'eventfu', m: Comm) {
   const comms = [...(c.comms||[]), m];
-  const field = kind === 'eventfu' ? 'followUpSentAt' : 'offeredAt';
-  const events = (c.events||[]).map(x => x.id === eventId ? {...x, [field]: m.date} : x);
+  const {events} = markEventPatch(c, eventId, kind, m.date);
   return {comms, events, lastContact: lastTouch({comms, jobs: c.jobs || []}), lastMail: {date: m.date, subject: m.subject}};
+}
+// The event marked as offered (offeredAt) or followed up (followUpSentAt) on the date; the other events untouched
+export function markEventPatch(c: Customer, eventId: string, kind: 'offer' | 'eventfu', date: ISODate | undefined): {events: CustomerEvent[]} {
+  const field = kind === 'eventfu' ? 'followUpSentAt' : 'offeredAt';
+  return {events: (c.events||[]).map(x => x.id === eventId ? {...x, [field]: date} : x)};
 }
 // A draft marked as sent: logged as a mail, the draft is removed and the event it was about is marked
 export function draftSentPatch(c: Customer, id: string): Partial<Customer> {

@@ -1,5 +1,6 @@
 /* The data layer: the only place that talks to a database. Components use the hooks in StoreContext.tsx; the store
- * behind them is the claude.ai artifact database today (artifactStore.ts) and a REST API later (#10). */
+ * behind them is the claude.ai artifact database (artifactStore.ts) or the REST API in server/ (restStore.ts); connect.ts
+ * chooses. */
 
 /** A customer document with its id */
 export interface CustomerDoc extends Customer { id: string }

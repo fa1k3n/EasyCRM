@@ -58,3 +58,14 @@ export function eventConflicts(e: CustomerEvent, customers?: Customer[] | null, 
 export const addEventPatch = (c: Customer, e: CustomerEvent): Partial<Customer> => ({events: [...(c.events || []), e]});
 export const dismissEventPatch = (c: Customer, id: string, dismissed: boolean): Partial<Customer> =>
   ({events: (c.events || []).map(e => e.id === id ? {...e, dismissed} : e)});
+// For every upcoming event (with an id) that has conflicts: what is already booked during it (the calendar agent's list)
+export function calendarConflicts(customers: Customer[], busy?: BusyItem[] | null): {customerId?: string; eventId: string; conflicts: Conflict[]}[] {
+  const out = [];
+  for (const c of customers) {
+    for (const e of upcomingEvents(c)) {
+      const conflicts = e.id ? eventConflicts(e, customers, busy) : [];
+      if (conflicts.length) out.push({customerId: c.id, eventId: e.id!, conflicts});
+    }
+  }
+  return out;
+}
