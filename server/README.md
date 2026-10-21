@@ -63,7 +63,10 @@ The local server has no login. It therefore:
 | `/api/v1/calendar` | GET | `{"items": [...], "conflicts": [{"customerId", "eventId", "conflicts": [...]}]}`: everything that belongs in the synced calendar (bookings, follow-ups, the 90-day deadlines, event follow-ups, invoices due), and for every upcoming event what is already booked during it (bookings and `sync/busy`) |
 | `/api/v1/export` | GET | Everything as one file: `{"format": "crm-export", "version": 1, "exportedAt", "collections": {"customers": {"<id>": {…}}, "skipped": {…}, "sync": {…}}}` |
 | `/api/v1/import` | POST | Writes such a file (up to 32 MB): every document exactly as in the file, all in one transaction or nothing; nothing is removed. Every customer is validated first. Answers `{"dryRun", "create": {collection: [ids]}, "update": {…}, "unchanged": n}`; with `?dryRun=1` nothing is written |
-| `/api/v1/sync/{busy\|calendar\|gmail}` | GET, PUT | The documents the agents sync; `busy.items` is the busy times. A document that has never been written gives `404` |
+| `/api/v1/sync/{busy\|calendar\|gmail\|integrations}` | GET, PUT | The documents the agents sync; `busy.items` is the busy times. `integrations` is written by the Worker after each scheduled run of an integration plugin: `{"<plugin id>": {"enabled", "failures", "lastRun": {"at", "ok", "trigger", "counts", "remaining", "notes", "unmatched", "error"}}}` (and `running` and `manualAt`, which the Worker uses to keep two runs apart and to space manual runs; written by the platform, not by plugins). A document that has never been written gives `404` |
+| `/api/v1/integrations` | GET | Only on Cloudflare, with integration plugins built in (`404` elsewhere): `[{"id", "name", "cron", "enabled", "failures", "lastRun"}]`. `failures` is the number of failed runs in a row |
+| `/api/v1/integrations/{id}` | PUT | `{"enabled": true\|false}`: a plugin that is off does not run on its schedule |
+| `/api/v1/integrations/{id}/run` | POST | Runs the plugin now, with the same code as the schedule, and answers with the run. `409` when it is off or already running, `429` when it was run by hand less than a minute ago |
 
 Every write checks the data with the logic's `validateCustomer` (known fields must have the right type, e.g. `status`
 `kund`/`kontaktad`/`potentiell` (`kontaktad`: contact made but no job yet), `types` a list of texts, dates `YYYY-MM-DD`; unknown fields and `ext` are kept; `null` counts as
@@ -76,7 +79,7 @@ A change to a list element is checked as part of the customer and also updates t
 `/api/v1/mcp` is an MCP server (the streamable HTTP transport, stateless, answered with JSON) for agents outside
 claude.ai. Its tools call the API above, so they follow the same validation, versions and rules:
 `list_customers`, `get_customer`, `create_customer`, `update_customer`, `add_list_item`, `update_list_item`,
-`remove_list_item`, `get_calendar`, `skip_company`, `get_sync`, `put_sync`. A tool the API refuses returns an error result
+`remove_list_item`, `get_calendar`, `skip_company`, `get_sync`, `put_sync`, `run_integration` (only on Cloudflare). A tool the API refuses returns an error result
 with the API's status and error. Connect an MCP client to `http://127.0.0.1:8787/api/v1/mcp` locally, or to
 `https://<your domain>/api/v1/mcp` in the cloud with the agent's Access service token
 (`CF-Access-Client-Id`/`CF-Access-Client-Secret` headers).

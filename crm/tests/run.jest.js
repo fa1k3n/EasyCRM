@@ -11,6 +11,7 @@ FILES.push('validate.test.js');
 FILES.push('item-patches.test.js');
 FILES.push('follow-up.test.js');
 FILES.push('status.test.js');
+FILES.push('integrations.test.js');
 
 // Runs a file as a <script>, like the browser does; an error in it fails the whole run instead of disappearing.
 function loadScript(rel) {

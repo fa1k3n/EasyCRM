@@ -42,10 +42,12 @@ const TOOLS: {name: string; description: string; inputSchema: Json}[] = [
     inputSchema: obj({})},
   {name: 'skip_company', description: 'Remembers a removed suggestion so it is not suggested again. key: the web domain, or the company name if there is none.',
     inputSchema: obj({key: str, company: str, website: str}, ['key'])},
-  {name: 'get_sync', description: 'Reads a sync document: busy (busy times from the calendar), calendar or gmail.',
+  {name: 'get_sync', description: 'Reads a sync document: busy (busy times from the calendar), calendar, gmail or integrations (the integration plugins\' latest runs in the cloud).',
     inputSchema: obj({doc: {type: 'string', enum: SYNC_DOCS}}, ['doc'])},
-  {name: 'put_sync', description: 'Writes a whole sync document: busy ({items: [{date, time, endTime, title, eventId}]}), calendar or gmail.',
-    inputSchema: obj({doc: {type: 'string', enum: SYNC_DOCS}, data: {type: 'object'}}, ['doc', 'data'])}
+  {name: 'put_sync', description: 'Writes a whole sync document: busy ({items: [{date, time, endTime, title, eventId}]}), calendar or gmail (integrations is the Worker\'s).',
+    inputSchema: obj({doc: {type: 'string', enum: SYNC_DOCS}, data: {type: 'object'}}, ['doc', 'data'])},
+  {name: 'run_integration', description: 'Runs an integration plugin now (only in the cloud, where the plugins are built in) and returns its run: ok, counts, notes or the error.',
+    inputSchema: obj({id: str}, ['id'])}
 ];
 
 const enc = encodeURIComponent;
@@ -92,7 +94,8 @@ const HANDLERS: Record<string, Handler> = {
   get_calendar: async (_args, api) => ({r: await api('GET', '/calendar')}),
   skip_company: async (args, api) => ({r: await api('PUT', `/skipped/${id(args, 'key')}`, {company: args.company ?? '', website: args.website ?? ''})}),
   get_sync: async (args, api) => ({r: await api('GET', `/sync/${id(args, 'doc')}`)}),
-  put_sync: async (args, api) => ({r: await api('PUT', `/sync/${id(args, 'doc')}`, args.data)})
+  put_sync: async (args, api) => ({r: await api('PUT', `/sync/${id(args, 'doc')}`, args.data)}),
+  run_integration: async (args, api) => ({r: await api('POST', `/integrations/${id(args, 'id')}/run`, {})})
 };
 
 async function runTool(name: string, args: Json, api: ApiCall): Promise<{data: unknown; isError: boolean}> {

@@ -39,6 +39,10 @@ export async function createArtifactStore(claude: ClaudeRuntime | undefined = (w
         next(d && Array.isArray(d.items) ? (d.items as BusyItem[]) : null);
       }, () => next(null));
     },
+    // The artifact database has no integration plugins: they run in the cloud's Worker
+    watchIntegrations(next) { next(null); return () => {}; },
+    async runIntegration() { throw new Error('Integrations run in the cloud'); },
+    async setIntegrationEnabled() { throw new Error('Integrations run in the cloud'); },
     async createCustomer(data) {
       const ref = customers.doc();
       // The logic's starting values (they always win), so that every new customer has the lists the logic expects

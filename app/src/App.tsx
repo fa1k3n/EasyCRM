@@ -3,6 +3,7 @@ import type {AppliedBrand} from './brand';
 import ErrorBoundary from './components/ErrorBoundary';
 import CustomerCard from './components/card/CustomerCard';
 import CustomerForm from './components/CustomerForm';
+import {IntegrationsAlert, IntegrationsButton, IntegrationsPage} from './components/integrations/Integrations';
 import CustomerList from './components/list/CustomerList';
 import Stats from './components/list/Stats';
 import Toolbar from './components/list/Toolbar';
@@ -30,6 +31,12 @@ export default function App({brand: {brand, error}, store, connectFailed = false
   const [selected, setSelected] = useState<string | null>(null);
   const [returnTo, setReturnTo] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  // The integrations page (#integrationer opens it directly); otherwise the customers
+  const [page, setPage] = useState<'customers' | 'integrations'>(() => (typeof location !== 'undefined' && location.hash === '#integrationer' ? 'integrations' : 'customers'));
+  const show = (next: 'customers' | 'integrations') => {
+    setPage(next);
+    try { history.replaceState(null, '', next === 'integrations' ? '#integrationer' : location.pathname + location.search); } catch { /* the address is only a convenience */ }
+  };
   // Back from the card: the focus returns to the customer's row in the list, or to the search field if the row is gone
   // (the customer was removed)
   useEffect(() => {
@@ -57,6 +64,7 @@ export default function App({brand: {brand, error}, store, connectFailed = false
                   </span>
                 </h1>
               </div>
+              <ErrorBoundary><IntegrationsButton onOpen={() => show('integrations')} /></ErrorBoundary>
               <ErrorBoundary><Stats /></ErrorBoundary>
               {store?.canWrite && (
                 <button type="button" onClick={() => setAdding(true)} className="flex-none rounded-full bg-accent px-4 py-2 font-bold text-accent-ink hover:bg-accent-hover">{t('newCustomer')}</button>
@@ -73,6 +81,8 @@ export default function App({brand: {brand, error}, store, connectFailed = false
                 <ul className="mt-1 list-disc pl-5">{loaded.errors.map(e => <li key={e}>{e}</li>)}</ul>
               </div>
             )}
+            {page === 'integrations' ? <main className="flex-1"><ErrorBoundary><IntegrationsPage onBack={() => show('customers')} /></ErrorBoundary></main> : <>
+            <ErrorBoundary><IntegrationsAlert onOpen={() => show('integrations')} /></ErrorBoundary>
             <div className={selected ? 'hidden md:block' : ''}><ErrorBoundary><Toolbar /></ErrorBoundary></div>
             <main className="grid flex-1 grid-cols-1 md:grid-cols-[minmax(300px,400px)_1fr]">
               <section aria-label={t('customersLabel')} className={`py-2 md:border-r md:border-line md:pr-3 ${selected ? 'hidden md:block' : ''}`}>
@@ -86,6 +96,7 @@ export default function App({brand: {brand, error}, store, connectFailed = false
                 </ErrorBoundary>
               </aside>
             </main>
+            </>}
           </div>
           {adding && <CustomerForm onSaved={setSelected} onClose={() => setAdding(false)} />}
           </ExtensionsProvider>

@@ -55,7 +55,16 @@ interface Customer {
 /** A busy time in Google Calendar (sync/busy, written by the calendar agent) */
 interface BusyItem { date?: ISODate; time?: string; endTime?: string; title?: string; eventId?: string; }
 
+/** The latest run of an integration plugin (sync/integrations, written by the Worker) */
+interface IntegrationRun {
+  at: string; ok: boolean; trigger: string; counts?: {customers: number; created: number; updated: number; linked: number};
+  remaining?: number; notes?: string[]; unmatched?: string[]; error?: string;
+}
+/** An integration plugin built into the Worker (GET /api/v1/integrations) */
+interface IntegrationInfo { id: string; name: string; cron: string; enabled: boolean; failures?: number; lastRun: IntegrationRun | null; }
+
 /* ---------- What the logic returns ---------- */
+type IntegrationStatus = 'off' | 'never' | 'ok' | 'warn' | 'broken';
 /** seg: one segment (the MCP layer); status and flags: the quick filters (either within a list, both lists must hold) */
 interface View { seg?: string; status?: string[]; flags?: string[]; type?: string; q?: string; sort?: string; }
 interface ContactStatus { level: 'never' | 'over' | 'warn' | 'ok'; days: number | null; d: ISODate | null; }

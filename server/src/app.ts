@@ -6,6 +6,7 @@ import type {Db} from './db';
 import {calendarRoutes} from './calendar';
 import {skippedRoutes, syncRoutes} from './collections';
 import {customerRoutes} from './customers';
+import {integrationRoutes, type Integrations} from './integrations';
 import {ApiError, errorResponse} from './errors';
 import {listRoutes} from './lists';
 import {mcpRoutes, type ApiCall} from './mcp';
@@ -29,11 +30,13 @@ export interface AppOptions {
   auth?: MiddlewareHandler;
   /** The MCP endpoint /api/v1/mcp (default on; off for the API the MCP tools call themselves) */
   mcp?: boolean;
+  /** The integration plugins built into the Worker (/api/v1/integrations); the local server has none */
+  integrations?: Integrations;
 }
 
 export type Env = {Variables: {body: unknown}};
 
-export function createApp({db, local = false, assets, auth, mcp = true}: AppOptions) {
+export function createApp({db, local = false, assets, auth, mcp = true, integrations}: AppOptions) {
   const app = new Hono<Env>();
 
   app.onError((err, c) => {
@@ -70,19 +73,21 @@ export function createApp({db, local = false, assets, auth, mcp = true}: AppOpti
   api.route('/sync', syncRoutes(db));
   api.route('/calendar', calendarRoutes(db));
   api.route('/', transferRoutes(db));
+  if (integrations) api.route('/integrations', integrationRoutes(integrations));
   // The MCP tools call the same API, inside the server, after the caller has passed the protections above
-  if (mcp) api.route('/mcp', mcpRoutes(innerApi(db)));
+  if (mcp) api.route('/mcp', mcpRoutes(innerApi(db, integrations)));
   app.route(`/api/${API_VERSION}`, api);
   if (assets) app.get('*', (c, next) => (c.req.path.startsWith('/api/') ? next() : assets(c, next)));
 
   return app;
 }
 
-/* The API as a function, for the MCP tools: the same routes without the outer protections (already passed) */
-function innerApi(db: Db): ApiCall {
+/* The API as a function, for the MCP tools and the Worker's integration plugins: the same routes without the outer
+ * protections (already passed, or a run inside the Worker that no request can reach) */
+export function innerApi(db: Db, integrations?: Integrations): ApiCall {
   let inner: ReturnType<typeof createApp> | null = null;
   return async (method, path, body, version) => {
-    inner ??= createApp({db, mcp: false});
+    inner ??= createApp({db, mcp: false, integrations});
     const headers: Record<string, string> = {};
     if (body !== undefined) headers['Content-Type'] = 'application/json';
     if (version !== undefined) headers['If-Match'] = `"${version}"`;

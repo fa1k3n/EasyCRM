@@ -23,6 +23,9 @@ export interface CRMLogicApi {
   status(c: Customer): ContactStatus;
   needsContact(c: Customer): boolean;
   statusOf(c: Customer): 'kund' | 'kontaktad' | 'potentiell';
+  INTEGRATION_BROKEN_AFTER: number;
+  integrationStatus(i: IntegrationInfo): IntegrationStatus;
+  brokenIntegrations(list: IntegrationInfo[] | null | undefined): IntegrationInfo[];
   followUpDue(c: Customer): boolean;
   addMonths(iso: string, n: number): string;
   daysLabel(st: ContactStatus): string;

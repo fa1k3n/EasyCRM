@@ -16,6 +16,7 @@ import {
   addEventPatch, calendarConflicts, dismissEventPatch, eventBadge, eventConflicts, eventOpen, eventSoon, eventWhen, eventsToFollowUp, hasEvent,
   hiddenEvents, isNewEvent, nextEvent, openEvents, upcomingEvents
 } from './events';
+import {INTEGRATION_BROKEN_AFTER, brokenIntegrations, integrationStatus} from './integrations';
 import {filterCustomers, segmentCounts, skipKey, statusOf} from './list';
 import {checkMailModule, draftSentPatch, logOnlyEntry, markEventPatch, normalizeMailText, sentPatch, signature} from './mail';
 import {hostOf, safeUrl} from './text';
@@ -38,6 +39,7 @@ export default {
   daysUntil, nextEvent, eventSoon, eventsToFollowUp, eventConflicts,
   eventBadge, customerTypes,
   followUpDue, addMonths, statusOf,
+  INTEGRATION_BROKEN_AFTER, integrationStatus, brokenIntegrations,
   validateCustomer, newCustomerDefaults, calendarConflicts, addItemPatch, replaceItemPatch, removeItemPatch, markEventPatch,
   EXAMPLE_BRAND, setBrand, getBrand, validateBrand, senderHint, brandFonts, googleFontsUrl, senderFor, typeColors, deriveColors, contrastRatio,
   // {id: name} for the current brand's customer types (worked out again when the brand changes)

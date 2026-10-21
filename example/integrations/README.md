@@ -72,6 +72,33 @@ Options: `--brand <folder>` (default `profile/`), `--since <YYYY-MM-DD>` (given 
 readable only by you: `chmod 600`). Against the cloud, the Access service token is read from `~/.config/crm/access.env`
 (`CF_ACCESS_CLIENT_ID`, `CF_ACCESS_CLIENT_SECRET`).
 
+## Running it in the cloud, on a schedule
+
+When the register runs on Cloudflare (`npm run cloudflare`), the Worker can run a plugin on a schedule, with the same
+code as `--apply`. List it in your brand folder's `cloudflare.json`:
+
+```json
+"integrations": [{"id": "<id>", "cron": "0 5 * * *"}]
+```
+
+`cron` is in UTC. `npm run cloudflare` type-checks the plugin, builds it into the Worker with its `settings.json`,
+and adds the schedule as a Cron Trigger. Put each variable the plugin lists in `env` into the Worker once, as a secret
+(the tool prints the commands; the value is typed in, never stored in a file):
+
+```sh
+npx wrangler secret put <NAME> --config <brand folder>/publish-cloudflare/wrangler.json
+```
+
+Each run writes at most `maxWritesPerRun` changes (in `settings.json`, default 20) to stay within the Workers free
+tier; the rest are written on the next run. The app's integrations page (the Integrations button in the header) lists every built-in plugin with its schedule
+and latest run: when, whether it worked, how much was written and left, the plan's `notes` and `unmatched`, or the
+error (with the secret values masked). A plugin whose latest 3 runs in a row failed is shown in red, with an alert
+above the customer list. There it can be run now and switched off (it then does not run on its schedule). The same
+is in the API: `GET /api/v1/integrations`, `PUT /api/v1/integrations/<id>` with `{"enabled": false}` and
+`POST /api/v1/integrations/<id>/run`. The Worker's own log only gets the plugin's id and the
+counts. In the Worker the plugin has no `vm` context of its own: the type check (no `fetch` or `process`) and `ctx`
+are what keep it to its declared hosts. That is not a hard security boundary; the plugins are your own code.
+
 ## Testing
 
 The example's tests are in `tests/integration.test.js`: they run the plugin against a made-up service with a fake

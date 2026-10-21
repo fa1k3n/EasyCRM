@@ -95,6 +95,25 @@ export async function createRestStore({fetch: doFetch = defaultFetch(), base = '
         }
       });
     },
+    watchIntegrations(next, fail) {
+      // The list is polled like the customers and asked for at once after a run or a switch; 404 = no plugins here
+      return every(async () => {
+        try {
+          const res = await doFetch!(`${base}/integrations`);
+          if (res.status === 404) { next(null); return; }
+          if (!res.ok) throw new ApiRequestError(res.status, 'http_error', `HTTP ${res.status}`);
+          next(await res.json() as IntegrationInfo[]);
+        } catch (e) {
+          fail(e);
+        }
+      }, true);
+    },
+    async runIntegration(id) {
+      return written(await call('POST', `/integrations/${encodeURIComponent(id)}/run`, {}) as IntegrationRun);
+    },
+    async setIntegrationEnabled(id, enabled) {
+      written(await call('PUT', `/integrations/${encodeURIComponent(id)}`, {enabled}));
+    },
     async createCustomer(data) {
       return written(((await call('POST', '/customers', data)) as {id: string}).id);
     },

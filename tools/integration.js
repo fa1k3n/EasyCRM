@@ -15,16 +15,12 @@ const path = require('path');
 const {spawnSync} = require('child_process');
 const vm = require('vm');
 const {accessHeaders, request} = require('./data');
+const core = require('./integration-core');
 
 const ROOT = path.resolve(__dirname, '..');
 const API = path.join(ROOT, 'tools', 'integration-api.ts');
 const GLOBALS = path.join(ROOT, 'tools', 'integration-globals.d.ts');
-const API_VERSION = 1;
-// The job fields a plugin may own. The type OwnedJobField (tools/integration-api.ts) is wider on purpose, so that a
-// plugin naming another field gets this check's message about owns; keep its comment in step. Never the user's
-// title, amount or link
-const OWNED_JOB_FIELDS = ['invoiceNumber', 'invoiceStatus', 'dueDate'];
-const ID = /^[a-z0-9_-]+$/;
+const {ID} = core;
 const L = () => require(path.join(ROOT, 'crm', 'logic.js'));
 
 /* ---------- Loading ---------- */
@@ -87,21 +83,6 @@ function runIsolated(code) {
   return {...manifest, ...(typeof run === 'function' ? {run: async ctx => JSON.parse(JSON.stringify((await run.call(manifest, ctx)) ?? null))} : {})};
 }
 
-function checkManifest(m, id) {
-  const errors = [];
-  if (!m || typeof m !== 'object') return ['the default export must be the manifest'];
-  if (m.id !== id || !ID.test(String(m.id))) errors.push(`id must be "${id}" (the folder's name, a–z, 0–9, - and _)`);
-  if (m.apiVersion !== API_VERSION) errors.push(`apiVersion ${m.apiVersion} is not supported (this platform has ${API_VERSION})`);
-  if (typeof m.name !== 'string' || !m.name) errors.push('name is missing');
-  if (typeof m.run !== 'function') errors.push('run must be a function');
-  for (const k of ['env', 'hosts']) if (m[k] !== undefined && !(Array.isArray(m[k]) && m[k].every(x => typeof x === 'string' && x))) errors.push(`${k} must be a list of texts`);
-  const owned = m.owns && m.owns.jobs;
-  if (owned !== undefined && !(Array.isArray(owned) && owned.every(f => OWNED_JOB_FIELDS.includes(f)))) {
-    errors.push(`owns.jobs may only have: ${OWNED_JOB_FIELDS.join(', ')}`);
-  }
-  return errors;
-}
-
 /** Loads <brand>/integrations/<id>/index.ts: type check, build, manifest check, and its settings.json */
 async function loadPlugin(brand, id) {
   const dir = path.join(brand, 'integrations', id);
@@ -109,120 +90,20 @@ async function loadPlugin(brand, id) {
   if (!fs.existsSync(entry)) throw new Error(`Cannot find the plugin: ${entry}`);
   typeCheck(entry);
   const manifest = bundle(entry);
-  const errors = checkManifest(manifest, id);
+  const errors = core.checkManifest(manifest, id);
   if (errors.length) throw new Error(`The plugin ${id} cannot be used:\n  ${errors.join('\n  ')}`);
   const file = path.join(dir, 'settings.json');
   const settings = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8').replace(/^﻿/, '')) : {};
   return {manifest, settings};
 }
 
-/* ---------- What the plugin gets ---------- */
+/* ---------- What the plugin gets and its plan (tools/integration-core.js) ---------- */
 
-function deepFreeze(o) {
-  if (o && typeof o === 'object' && !Object.isFrozen(o)) {
-    Object.freeze(o);
-    for (const v of Object.values(o)) deepFreeze(v);
-  }
-  return o;
-}
-
-const today = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
-
-/** The plugin's ctx: only its variables, a GET-only fetch to its hosts over https, frozen copies of the customers */
-function makeContext({manifest, settings = {}, env = process.env, customers, fetchImpl = fetch, options = {}}) {
-  const names = manifest.env || [];
-  const missing = names.filter(n => !env[n]);
-  if (missing.length) throw Object.assign(new Error(`Missing environment variable${missing.length > 1 ? 's' : ''}: ${missing.join(', ')}`), {exitCode: 2});
-  // Reading a variable the manifest did not declare (a name like MY_KEY) throws, so a missing env entry is found at once
-  const declared = Object.freeze(Object.fromEntries(names.map(n => [n, env[n]])));
-  const config = new Proxy(declared, {
-    get(target, key) {
-      if (typeof key === 'string' && /^[A-Z][A-Z0-9_]*$/.test(key) && !Object.prototype.hasOwnProperty.call(target, key)) {
-        throw new Error(`${key} is not among the plugin's env (declare it in the manifest)`);
-      }
-      return target[key];
-    }
-  });
-  const hosts = manifest.hosts || [];
-  return {
-    config,
-    async fetch(url, init = {}) {
-      const u = new URL(url);
-      if (u.protocol !== 'https:') throw new Error(`Only https is allowed: ${u.protocol}//${u.host}`);
-      if (!hosts.includes(u.hostname)) throw new Error(`${u.hostname} is not among the plugin's hosts (${hosts.join(', ') || 'none'})`);
-      if (init.method && init.method.toUpperCase() !== 'GET') throw new Error('Only GET is allowed: a plugin only reads the service');
-      // A redirect is never followed: it could lead to a host outside hosts
-      const res = await fetchImpl(u.href, {method: 'GET', redirect: 'error', headers: {...(init.headers || {})}});
-      return {ok: res.ok, status: res.status, json: () => res.json(), text: () => res.text()};
-    },
-    customers: deepFreeze(structuredClone(customers)),
-    today: today(),
-    options: Object.freeze({...options}),
-    settings: deepFreeze(structuredClone(settings))
-  };
-}
-
-/* ---------- The plan ---------- */
-
+/** The plugin's ctx (core.makeContext), here with the process's environment and Node's fetch by default */
+const makeContext = ({env = process.env, fetchImpl = fetch, ...rest}) => core.makeContext({env, fetchImpl, ...rest});
 /** Problems that stop the plan from being written (empty = fine) */
-function checkPlan(plan, manifest, customers) {
-  if (!plan || typeof plan !== 'object') return ['run must return a plan object'];
-  const issues = [], ids = new Set(customers.map(c => c.id)), seen = new Set();
-  for (const k of ['customers', 'jobs', 'links', 'unmatched', 'notes']) if (plan[k] !== undefined && !Array.isArray(plan[k])) issues.push(`${k} must be a list`);
-  // New customers (create only); jobs and links in the same plan may refer to them
-  for (const n of Array.isArray(plan.customers) ? plan.customers : []) {
-    if (!n || typeof n.id !== 'string' || !/^[A-Za-z0-9_.:-]{1,200}$/.test(n.id)) { issues.push('a new customer has no valid id'); continue; }
-    if (ids.has(n.id)) { issues.push(`${seen.has('customer/' + n.id) ? `new customer ${n.id} is in the plan twice` : `customer ${n.id} already exists`}`); continue; }
-    if (!n.data || typeof n.data !== 'object' || Array.isArray(n.data)) { issues.push(`new customer ${n.id}: data must be an object`); continue; }
-    for (const i of L().validateCustomer(n.data)) issues.push(`new customer ${n.id}: ${i.path} ${i.message}`);
-    // Only the plugin's own field in ext, as for links
-    const ext = n.data.ext && typeof n.data.ext === 'object' ? Object.keys(n.data.ext) : [];
-    for (const k of ext.filter(k => k !== manifest.id)) issues.push(`new customer ${n.id}: ext.${k} belongs to someone else (only ext.${manifest.id})`);
-    ids.add(n.id);
-    seen.add('customer/' + n.id);
-  }
-  const list = k => (Array.isArray(plan[k]) ? plan[k] : []);
-  for (const j of list('jobs')) {
-    const item = j && j.item;
-    if (!j || !ids.has(j.customerId)) { issues.push(`job for an unknown customer: ${j && j.customerId}`); continue; }
-    if (!item || typeof item.id !== 'string' || !/^[A-Za-z0-9_.:-]{1,200}$/.test(item.id)) { issues.push(`a job for ${j.customerId} has no valid id`); continue; }
-    const key = `${j.customerId}/${item.id}`;
-    if (seen.has(key)) issues.push(`job ${item.id} is in the plan twice`);
-    seen.add(key);
-    for (const i of L().validateCustomer({jobs: [item]})) issues.push(`job ${item.id}: ${i.path.replace('jobs[0].', '')} ${i.message}`);
-  }
-  for (const l of list('links')) {
-    if (!l || !ids.has(l.customerId)) issues.push(`link for an unknown customer: ${l && l.customerId}`);
-    else { try { JSON.stringify(l.data); } catch { issues.push(`the link for ${l.customerId} is not JSON`); } }
-  }
-  for (const k of ['unmatched', 'notes']) if (list(k).some(x => typeof x !== 'string')) issues.push(`${k} must be texts`);
-  return issues;
-}
-
-const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-
-/** What writing the plan would change: new jobs, changed owned fields on existing jobs, and changed links */
-function diffPlan(plan, manifest, customers) {
-  const byId = new Map(customers.map(c => [c.id, c]));
-  const owned = (manifest.owns && manifest.owns.jobs) || [];
-  const out = {create: [], update: [], links: []};
-  // New customers: only when the plan has them (then they are written first); their jobs and links start from them
-  if (Array.isArray(plan.customers)) {
-    out.customers = plan.customers.filter(n => !byId.has(n.id));
-    for (const n of out.customers) byId.set(n.id, {id: n.id, ...n.data});
-  }
-  for (const {customerId, item} of plan.jobs || []) {
-    const old = (byId.get(customerId).jobs || []).find(x => x && x.id === item.id);
-    if (!old) { out.create.push({customerId, item}); continue; }
-    const patch = Object.fromEntries(owned.filter(f => item[f] !== undefined && !same(item[f], old[f])).map(f => [f, item[f]]));
-    if (Object.keys(patch).length) out.update.push({customerId, itemId: item.id, patch});
-  }
-  for (const {customerId, data} of plan.links || []) {
-    const ext = byId.get(customerId).ext || {};
-    if (!same(ext[manifest.id], data)) out.links.push({customerId, data});
-  }
-  return out;
-}
+const checkPlan = (plan, manifest, customers) => core.checkPlan(plan, manifest, customers, L().validateCustomer);
+const {diffPlan} = core;
 
 const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
@@ -309,66 +190,19 @@ async function main(argv) {
 
 /* ---------- Writing ---------- */
 
-// One call to the REST API (with the Access token when there is one): status, body and the version from ETag
-async function call(url, method, body, version) {
+// The REST API over HTTP (with the Access token when there is one), as core.applyPlan calls it
+const httpCall = base => async (method, apiPath, body, version) => {
   const headers = {...accessHeaders()};
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (version !== undefined) headers['If-Match'] = `"${version}"`;
-  const res = await fetch(url, {method, headers, body: body === undefined ? undefined : JSON.stringify(body)});
+  const res = await fetch(`${base}${apiPath}`, {method, headers, body: body === undefined ? undefined : JSON.stringify(body)});
   const tag = /^"(\d+)"$/.exec(res.headers.get('ETag') || '');
-  const data = res.status === 204 ? null : await res.json().catch(() => null);
-  if (!res.ok && res.status !== 412) {
-    const e = data && data.error;
-    throw new Error(`The server answered ${res.status} for ${method} ${new URL(url).pathname}: ${e ? e.message : 'no message'}`);
-  }
-  return {status: res.status, data, version: tag ? Number(tag[1]) : undefined};
-}
+  return {status: res.status, data: res.status === 204 ? null : await res.json().catch(() => null), version: tag ? Number(tag[1]) : undefined};
+};
 
-/* Writes one change with the customer's current version. If someone else wrote in between (412), the customer is read
- * again and the change is made on the new version; a job that is already there is not added again. */
-async function writeWithVersion(base, customerId, write) {
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const current = await call(`${base}/customers/${encodeURIComponent(customerId)}`, 'GET');
-    const r = await write(current.data, current.version);
-    if (!r || r.status !== 412) return r;
-  }
-  throw new Error(`The customer ${customerId} kept changing; run the integration again`);
-}
-
-/** Writes the diff through the REST API: new jobs with POST (the server's rules run), owned fields on existing jobs
- * with PATCH, and the plugin's link in customer.ext[<id>]. Always with If-Match. Returns how many of each were written */
+/** Writes the diff through the REST API at serverUrl (core.applyPlan, without a limit). Returns how many of each were written */
 async function applyPlan(diff, manifest, serverUrl) {
-  const base = `${serverUrl.replace(/\/+$/, '')}/api/v1`;
-  const n = {...(diff.customers ? {customers: 0} : {}), created: 0, updated: 0, linked: 0};
-  // New customers first, create only (If-Match "0"): an existing one is never overwritten
-  for (const c of diff.customers || []) {
-    const r = await call(`${base}/customers/${encodeURIComponent(c.id)}`, 'PUT', c.data, 0);
-    if (r.status !== 412) n.customers++;
-  }
-  const has = (customer, id) => (customer.jobs || []).some(j => j && j.id === id);
-  for (const {customerId, item} of diff.create) {
-    await writeWithVersion(base, customerId, async (customer, version) => {
-      if (has(customer, item.id)) return null;
-      const r = await call(`${base}/customers/${encodeURIComponent(customerId)}/jobs`, 'POST', item, version);
-      if (r.status !== 412) n.created++;
-      return r;
-    });
-  }
-  for (const {customerId, itemId, patch} of diff.update) {
-    await writeWithVersion(base, customerId, async (customer, version) => {
-      if (!has(customer, itemId)) return null;
-      const r = await call(`${base}/customers/${encodeURIComponent(customerId)}/jobs/${encodeURIComponent(itemId)}`, 'PATCH', patch, version);
-      if (r.status !== 412) n.updated++;
-      return r;
-    });
-  }
-  for (const {customerId, data} of diff.links) {
-    await writeWithVersion(base, customerId, async (customer, version) => {
-      const r = await call(`${base}/customers/${encodeURIComponent(customerId)}`, 'PATCH', {ext: {...(customer.ext || {}), [manifest.id]: data}}, version);
-      if (r.status !== 412) n.linked++;
-      return r;
-    });
-  }
+  const {remaining, ...n} = await core.applyPlan(diff, manifest, httpCall(`${serverUrl.replace(/\/+$/, '')}/api/v1`));
   return n;
 }
 

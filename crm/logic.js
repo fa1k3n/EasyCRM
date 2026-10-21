@@ -863,6 +863,14 @@
 		createdAt: at,
 		updatedAt: at
 	});
+	function integrationStatus(i) {
+		if (!i.enabled) return "off";
+		if (!i.lastRun) return "never";
+		const failures = i.failures ?? (i.lastRun.ok ? 0 : 1);
+		if (failures >= 3) return "broken";
+		return failures > 0 || !i.lastRun.ok ? "warn" : "ok";
+	}
+	var brokenIntegrations = (list) => (list || []).filter((i) => integrationStatus(i) === "broken");
 	var safeUrl = (u) => /^https?:\/\//i.test(u || "") ? u : u && /^[\w.-]+\.[a-z]{2,}/i.test(u) ? "https://" + u : null;
 	var hostOf = (u) => {
 		try {
@@ -1227,6 +1235,9 @@
 		followUpDue,
 		addMonths,
 		statusOf,
+		INTEGRATION_BROKEN_AFTER: 3,
+		integrationStatus,
+		brokenIntegrations,
 		validateCustomer,
 		newCustomerDefaults,
 		calendarConflicts,

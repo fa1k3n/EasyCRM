@@ -1,5 +1,5 @@
-/* /api/v1/skipped (removed suggestions; the key comes from the logic's skipKey) and /api/v1/sync/{busy|calendar|gmail}
- * (the documents the agents sync). Both are whole documents written with PUT; If-Match works as for customers. */
+/* /api/v1/skipped (removed suggestions; the key comes from the logic's skipKey) and /api/v1/sync/{busy|calendar|gmail|integrations}
+ * (the documents the agents sync, and the integration plugins' last runs). Both are whole documents written with PUT; If-Match works as for customers. */
 import {Hono} from 'hono';
 import type {Context} from 'hono';
 import type {Env} from './app';
@@ -7,7 +7,7 @@ import type {Collection, Db, JsonObject} from './db';
 import type {ErrorDetail} from './errors';
 import {bodyObject, checkId, checkSize, conflict, docResponse, ifMatch, invalid, notFound, now, withoutId} from './docs';
 
-export const SYNC_DOCS = ['busy', 'calendar', 'gmail'];
+export const SYNC_DOCS = ['busy', 'calendar', 'gmail', 'integrations'];
 
 async function putDoc(c: Context<Env>, db: Db, collection: Collection, id: string, data: JsonObject) {
   checkSize(data);

@@ -3,6 +3,7 @@
  *   node.mjs    the local server with Hono built in (node node.mjs [--port <port>] [--db <file>] [--brand <folder>] [--static <folder>])
  *   worker.mjs  the same API for Cloudflare Workers with D1 (tools/cloudflare.js puts it in the publish folder)
  * Usage: node tools/build-server.js [--out-dir <folder>]   (default server/dist; part of npm run build)
+ * buildWorker() builds the Worker from another entry: tools/cloudflare.js uses it to build in the company's plugins.
  * Exit code 0 = built, 1 = error. */
 const path = require('path');
 
@@ -18,27 +19,35 @@ function parseArgs(argv) {
   return args;
 }
 
-async function buildServer({outDir}) {
+// Everything from npm is built in, so the files run without node_modules; Node's own modules stay imports
+async function buildOne({entry, file, target, outDir, emptyOutDir}) {
   const {build} = await import('vite');
-  // Everything from npm is built in, so the files run without node_modules; Node's own modules stay imports
-  const one = (entry, file, target, emptyOutDir) => build({
+  return build({
     configFile: false,
     root: SERVER,
     logLevel: 'warn',
     mode: 'production',
+    // Integration plugins import their contract by this name (only types, which disappear in the build)
+    resolve: {alias: {'crm-integration-api': path.join(ROOT, 'tools', 'integration-api.ts')}},
     ssr: {noExternal: true, target},
     build: {
       outDir,
       emptyOutDir,
-      ssr: path.join(SERVER, 'src', entry),
+      ssr: entry,
       target: target === 'node' ? 'node24' : 'es2022',
       rolldownOptions: {output: {format: 'esm', entryFileNames: file, codeSplitting: false}}
     }
   });
-  await one('cli.ts', 'node.mjs', 'node', true);
-  await one('worker.ts', 'worker.mjs', 'webworker', false);
+}
+
+async function buildServer({outDir}) {
+  await buildOne({entry: path.join(SERVER, 'src', 'cli.ts'), file: 'node.mjs', target: 'node', outDir, emptyOutDir: true});
+  await buildOne({entry: path.join(SERVER, 'src', 'worker.ts'), file: 'worker.mjs', target: 'webworker', outDir, emptyOutDir: false});
   return {outDir};
 }
+
+/** The Worker from another entry (a module whose default export is createWorker's result) into <outDir>/worker.mjs */
+const buildWorker = (entry, outDir) => buildOne({entry, file: 'worker.mjs', target: 'webworker', outDir, emptyOutDir: false});
 
 async function main(argv) {
   try {
@@ -51,5 +60,5 @@ async function main(argv) {
   }
 }
 
-module.exports = {buildServer};
+module.exports = {buildServer, buildWorker};
 if (require.main === module) main(process.argv.slice(2)).then(code => { process.exitCode = code; });
