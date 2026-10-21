@@ -19,7 +19,7 @@ export default function CustomerForm({customer, onSaved, onClose}: {customer?: C
   const [f, setF] = useState<CustomerFormFields>(() => ({
     company: customer?.company || '', name: customer?.name || '', role: customer?.role || '', email: customer?.email || '',
     phone: customer?.phone || '', website: customer?.website || '', city: customer?.city || '', notes: customer?.notes || '',
-    status: customer?.status === 'potentiell' ? 'potentiell' : 'kund',
+    status: customer ? L.statusOf(customer) : 'kund',
     types: customer ? L.customerTypes(customer) : L.getBrand().customerTypes.slice(0, 1).map(x => x.id)
   }));
   const [error, setError] = useState('');
@@ -36,7 +36,7 @@ export default function CustomerForm({customer, onSaved, onClose}: {customer?: C
     setError('');
     try {
       const id = isNew ? await store!.createCustomer(patch) : (await store!.updateCustomer(customer.id, {...patch, example: false}), customer.id);
-      toast(isNew ? (f.status === 'potentiell' ? t('potentialAdded') : t('customerAdded')) : t('saved'));
+      toast(isNew ? t(f.status === 'potentiell' ? 'potentialAdded' : f.status === 'kontaktad' ? 'contactedAdded' : 'customerAdded') : t('saved'));
       onSaved(id);
       onClose();
     } catch (err) {
@@ -56,10 +56,10 @@ export default function CustomerForm({customer, onSaved, onClose}: {customer?: C
       <form onSubmit={submit} noValidate>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div role="group" aria-label={t('statusGroup')} className="flex w-fit gap-0.5 rounded-full bg-sunk p-[3px] sm:col-span-2">
-            {(['kund', 'potentiell'] as const).map(st => (
+            {(['kund', 'kontaktad', 'potentiell'] as const).map(st => (
               <button key={st} type="button" aria-pressed={f.status === st} onClick={() => setF(v => ({...v, status: st}))}
                 className={`rounded-full px-3 py-1.5 text-[13.5px] font-medium ${f.status === st ? 'bg-ink text-bg' : 'text-text'}`}>
-                {st === 'kund' ? t('statusCustomer') : t('potentialCustomer')}
+                {t(st === 'kund' ? 'statusCustomer' : st === 'kontaktad' ? 'contactedCustomer' : 'potentialCustomer')}
               </button>
             ))}
           </div>

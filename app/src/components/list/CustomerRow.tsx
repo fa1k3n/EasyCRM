@@ -45,9 +45,11 @@ export default function CustomerRow({c, selected, onSelect}: {c: CustomerDoc; se
         {badge?.kind === 'offer' && <span className={`${pillClass} bg-tally text-tally-ink`}>{badge.count > 1 ? t('badgeOfferMany', {count: badge.count}) : t('badgeOffer')}</span>}
         {badge?.kind === 'soon' && <span className={`${pillClass} border border-event text-event`}>{t('badgeSoon')}</span>}
         {followUp && <span className={`${pillClass} border border-ok bg-ok-soft text-ok`}>{t('badgeFollowUpEvent')}</span>}
+        {L.followUpDue(c) && <span title={c.followUp?.note || undefined} className={`${pillClass} border border-amber bg-amber-soft text-amber`}>{t('badgeFollowUp')}</span>}
         {extBadges.map(b => <span key={b.key} title={b.title} className={`${pillClass} border border-line text-ink`}>{b.text}</span>)}
         {st.level === 'over' && <span className={`${pillClass} bg-tally text-tally-ink`}>{t('badgeContact')}</span>}
         <span className={`whitespace-nowrap font-display text-[12.5px] font-semibold ${DAYS[st.level]}`}>{L.daysLabel(st)}</span>
+        {c.status === 'kontaktad' && <span className={`${pillClass} border border-info text-info`}>{t('badgeContacted')}</span>}
         {c.status === 'potentiell' && (c.draft
           ? <span className={`${pillClass} border border-info text-info`}>{t('badgeDraft')}</span>
           : <span className={`${pillClass} border border-dashed border-muted text-muted`}>{t('badgePotential')}</span>)}

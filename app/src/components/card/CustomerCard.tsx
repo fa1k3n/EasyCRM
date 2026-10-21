@@ -75,6 +75,7 @@ export default function CustomerCard({id, onBack}: {id: string | null; onBack: (
           <span key={type} className="inline-flex items-center gap-1.5 text-[11.5px] font-semibold uppercase tracking-wide" style={{color: `var(--t-${type})`}}><TypeIcon id={type} size={15} decorative />{L.SERVICE_TYPES[type]}</span>
         ))}
         {c.status === 'potentiell' && <span className="rounded-full border border-dashed border-muted px-[7px] py-0.5 text-[11px] font-semibold uppercase tracking-wide text-muted">{t('potentialCustomer')}</span>}
+        {c.status === 'kontaktad' && <span className="rounded-full border border-info px-[7px] py-0.5 text-[11px] font-semibold uppercase tracking-wide text-info">{t('contactedCustomer')}</span>}
         <span className={`font-display text-[12.5px] font-semibold ${DAYS_TEXT[st.level]}`}>
           {st.level === 'never' ? t('notContacted') : t('lastContactOn', {date: L.fmtDate(st.d)})}
         </span>

@@ -15,10 +15,10 @@ import {t} from './i18n';
 import {logic} from './logic';
 import {ViewProvider} from './view';
 
-/* A red lamp on the logo when some customer is waiting for contact (90 days or never contacted). */
+/* A red lamp on the logo when some customer is waiting for contact (90 days, never contacted or a due reminder). */
 function Lamp() {
   const {state, customers} = useCustomers();
-  if (state !== 'ready' || !customers.some(logic().needsContact)) return null;
+  if (state !== 'ready' || logic().segmentCounts(customers).kontakta === 0) return null;
   return <span data-lamp title={t('lampTitle')} className="absolute -right-0.5 -top-0.5 size-3.5 rounded-full bg-tally shadow-[0_0_0_3px_var(--bg)]"><span className="sr-only">{t('lampTitle')}</span></span>;
 }
 

@@ -9,6 +9,8 @@ const FILES = ['../logic.js', 'harness.js', 'test-brand.js', 'logic.test.js', 'b
 // Added later (a new line, so the list above is unchanged)
 FILES.push('validate.test.js');
 FILES.push('item-patches.test.js');
+FILES.push('follow-up.test.js');
+FILES.push('status.test.js');
 
 // Runs a file as a <script>, like the browser does; an error in it fails the whole run instead of disappearing.
 function loadScript(rel) {

@@ -38,8 +38,8 @@ test('"Gör till kund" asks first; Avbryt changes nothing; confirming changes on
 
 test('a customer can be moved back to potential, also with a question first (#103)', async () => {
   const {doc} = await show('k1');
-  fireEvent.click(screen.getByRole('button', {name: 'Gör till potentiell kund'}));
-  fireEvent.click(screen.getByRole('button', {name: 'Ja, gör till potentiell'}));
+  fireEvent.click(screen.getByRole('button', {name: 'Gör till prospekt'}));
+  fireEvent.click(screen.getByRole('button', {name: 'Ja, gör till prospekt'}));
   await settle();
   expect(doc('k1')!.status).toBe('potentiell');
   expect(screen.getByRole('button', {name: 'Gör till kund'})).toBeTruthy();

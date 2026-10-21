@@ -13,10 +13,10 @@
       followUp: {date: ahead(12), note: 'Ask about Christmas photos'},
       events: [{id: 'e9', title: 'Autumn mingle for clients', date: iso(4), location: 'The office'}, {id: 'e8', title: 'Breakfast seminar on AI', date: ahead(19), location: 'Main Street', offeredAt: iso(2)}]},
     {id: 'x2', company: 'Example Swim Club', name: 'Peter Oak', role: 'Chair', types: ['event'], status: 'kund', email: 'peter@example.com', comms: [m(200, 'Live stream of the championship')], events: [{id: 'e1', title: 'District championship', date: ahead(20), location: 'City Pool, Example Town', foundAt: iso(2)}], createdAt: '2026-02-01'},
-    {id: 'x3', company: 'Example Accounting Ltd', name: 'Sarah Holm', status: 'kund', email: 'sarah@example.com', comms: [m(70, 'Annual report photos', 'mail_in')], createdAt: '2026-03-01'},
+    {id: 'x3', company: 'Example Accounting Ltd', name: 'Sarah Holm', status: 'kund', email: 'sarah@example.com', comms: [m(70, 'Annual report photos', 'mail_in')], followUp: {date: iso(1), note: 'Agreed to talk again after the meeting'}, createdAt: '2026-03-01'},
     {id: 'x4', company: 'Example Consulting', name: 'Ali North', role: 'Head of HR', types: ['projekt', 'event'], status: 'kund', comms: [m(12, 'Recording of the breakfast seminar')], events: [{id: 'e2', title: 'Autumn seminar', date: ahead(9), location: 'Online'}, {id: 'e3', title: 'Christmas breakfast', date: ahead(40), location: 'The office'}], createdAt: '2026-04-01'},
     {id: 'x5', company: 'Example Property', name: 'Lena Berg', role: 'Head of communications', status: 'potentiell', source: 'agent', email: 'lena@example.com', why: 'Growing, and the staff page has photos in different styles.', draft: {subject: 'Portraits for Example Property', body: 'Hi Lena,\n\nExample text.'}, createdAt: '2026-10-12'},
-    {id: 'x6', company: 'Example Architects', status: 'potentiell', createdAt: '2026-10-10'},
+    {id: 'x6', company: 'Example Architects', name: 'Nina West', status: 'kontaktad', comms: [m(20, 'Meeting about the new office', 'mote')], createdAt: '2026-10-10'},
     {id: 'x7', company: 'Example Recruitment', name: 'Omar Said', status: 'kund', comms: [m(3, 'Thanks for last time')], createdAt: '2026-05-01'},
     {id: 'x8', company: 'Example Events & Galas', name: 'Eve Stream', status: 'kund', comms: [m(95, 'Quote for the gala')], createdAt: '2026-06-01'}
   ];

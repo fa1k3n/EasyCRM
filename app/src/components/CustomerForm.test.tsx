@@ -45,12 +45,12 @@ test('a new customer: the first customer type is pre-chosen, and saving creates 
 test('a potential customer can be added; the sender hint for customer types is shown', async () => {
   const {fake, saved} = await show();
   expect(screen.getByText(/Event ger avsändaren Testsporten/)).toBeTruthy();
-  fireEvent.click(within(screen.getByRole('group', {name: 'Status'})).getByRole('button', {name: 'Potentiell kund'}));
+  fireEvent.click(within(screen.getByRole('group', {name: 'Status'})).getByRole('button', {name: 'Prospekt'}));
   fireEvent.change(field('Kontaktperson'), {target: {value: 'Anna Exempel'}});
   fireEvent.click(screen.getByRole('button', {name: 'Lägg till'}));
   await settle();
   expect(fake.collections.get('customers')!.get(saved[0])).toMatchObject({name: 'Anna Exempel', status: 'potentiell'});
-  expect(screen.getByRole('status').textContent).toBe('Potentiell kund tillagd');
+  expect(screen.getByRole('status').textContent).toBe('Prospekt tillagt');
 });
 
 test('without company and contact person the form says so and writes nothing', async () => {

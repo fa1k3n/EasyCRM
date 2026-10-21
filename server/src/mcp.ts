@@ -25,9 +25,9 @@ const version = {type: 'integer', description: 'the version from get_customer; t
 
 const TOOLS: {name: string; description: string; inputSchema: Json}[] = [
   {name: 'list_customers', description: 'Lists the customers in short form (id, company, name, status, types, email, city, lastContact). Optional search text and status filter.',
-    inputSchema: obj({query: str, status: {type: 'string', enum: ['kund', 'potentiell']}})},
+    inputSchema: obj({query: str, status: {type: 'string', enum: ['kund', 'kontaktad', 'potentiell']}})},
   {name: 'get_customer', description: 'One customer with all its fields, and its version.', inputSchema: obj({id: str}, ['id'])},
-  {name: 'create_customer', description: 'Creates a customer (or a potential customer with status "potentiell") and returns it with its new id.',
+  {name: 'create_customer', description: 'Creates a customer (status "kund"; "kontaktad" = contact made but no job yet; "potentiell" = a prospect) and returns it with its new id.',
     inputSchema: obj({data: {type: 'object'}}, ['data'])},
   {name: 'update_customer', description: 'Merges the fields in patch into the customer (top level). Send the version from get_customer.',
     inputSchema: obj({id: str, patch: {type: 'object'}, version}, ['id', 'patch'])},
@@ -66,8 +66,8 @@ const listOf = (args: Json) => {
   return args.list as string;
 };
 const withVersion = (r: Result) => ({r, data: {version: r.version, customer: r.body}});
-// The status filter is the list's segments: kund = "kunder", potentiell = "potentiella"
-const SEGMENT: Record<string, string> = {kund: 'kunder', potentiell: 'potentiella'};
+// The status filter is the list's segments: kund = "kunder", kontaktad = "kontaktade", potentiell = "potentiella"
+const SEGMENT: Record<string, string> = {kund: 'kunder', kontaktad: 'kontaktade', potentiell: 'potentiella'};
 
 /* What each tool does with the REST API; data is what the agent gets (default: the API's answer) */
 const HANDLERS: Record<string, Handler> = {

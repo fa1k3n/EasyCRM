@@ -12,3 +12,9 @@ export const fmtDate = (iso?: ISODate | null): string => { if (!iso) return ''; 
 export const dayMonth = (iso: ISODate): string => { const [,m,d] = iso.split('-'); return `${+d} ${tx('months').split(',')[+m-1]}`; };
 // Counts at 12:00 local time, so that daylight saving time never moves the date
 export const addDays = (iso: ISODate, n: number): ISODate => { const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return toISO(d); };
+// The same day n months later, or the last day of that month if the day does not exist (31 January + 1 = 28/29 February)
+export const addMonths = (iso: ISODate, n: number): ISODate => {
+  const [y, m, day] = iso.split('-').map(Number);
+  const last = new Date(y, m - 1 + n + 1, 0, 12);
+  return toISO(new Date(last.getFullYear(), last.getMonth(), Math.min(day, last.getDate()), 12));
+};

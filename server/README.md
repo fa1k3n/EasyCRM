@@ -66,7 +66,7 @@ The local server has no login. It therefore:
 | `/api/v1/sync/{busy\|calendar\|gmail}` | GET, PUT | The documents the agents sync; `busy.items` is the busy times. A document that has never been written gives `404` |
 
 Every write checks the data with the logic's `validateCustomer` (known fields must have the right type, e.g. `status`
-`kund`/`potentiell`, `types` a list of texts, dates `YYYY-MM-DD`; unknown fields and `ext` are kept; `null` counts as
+`kund`/`kontaktad`/`potentiell` (`kontaktad`: contact made but no job yet), `types` a list of texts, dates `YYYY-MM-DD`; unknown fields and `ext` are kept; `null` counts as
 missing), sets `updatedAt` and raises the version. An `id` in the body is ignored: the id is the one in the path.
 A change to a list element is checked as part of the customer and also updates the customer's `updatedAt` and version;
 `If-Match` on the list paths is the customer's version.

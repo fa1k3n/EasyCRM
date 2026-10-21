@@ -22,6 +22,9 @@ export interface CRMLogicApi {
   daysUntil(iso: string): number;
   status(c: Customer): ContactStatus;
   needsContact(c: Customer): boolean;
+  statusOf(c: Customer): 'kund' | 'kontaktad' | 'potentiell';
+  followUpDue(c: Customer): boolean;
+  addMonths(iso: string, n: number): string;
   daysLabel(st: ContactStatus): string;
   latestMail(c: Customer): Comm | null;
   upcomingEvents(c: Customer): CustomerEvent[];
@@ -32,7 +35,7 @@ export interface CRMLogicApi {
   hasBooking(c: Customer): boolean;
   customerTypes(c: Customer): string[];
   filterCustomers<T extends Customer>(customers: T[], view: View): T[];
-  segmentCounts(customers: Customer[]): Record<'alla' | 'kontakta' | 'bokat' | 'kunder' | 'potentiella', number>;
+  segmentCounts(customers: Customer[]): Record<'alla' | 'kontakta' | 'bokat' | 'kunder' | 'kontaktade' | 'potentiella', number>;
   eventWhen(e: CustomerEvent): {kind: 'ongoing' | 'today' | 'tomorrow' | 'days'; days: number};
   eventOpen(c: Customer, e: CustomerEvent | null | undefined): boolean;
   contrastRatio(a: string, b: string): number;
@@ -48,7 +51,7 @@ export interface CRMLogicApi {
   pastBookings(c: Customer): Booking[];
   addBookingPatch(c: Customer, b: Booking): Partial<Customer>;
   removeBookingPatch(c: Customer, id: string): Partial<Customer>;
-  statusPatch(status: 'kund' | 'potentiell'): Partial<Customer>;
+  statusPatch(status: 'kund' | 'kontaktad' | 'potentiell'): Partial<Customer>;
   customerFormPatch(f: CustomerFormFields): {patch: Partial<Customer>; errors: string[]};
   senderHint(): string;
   skipKey(c: Customer): string;
@@ -74,7 +77,7 @@ export type TypeIconSpec = {kind: 'svg'; svg: string} | {kind: 'own' | 'lucide';
 
 export interface CustomerFormFields {
   company?: string; name?: string; role?: string; email?: string; phone?: string; website?: string; city?: string; notes?: string;
-  status: 'kund' | 'potentiell'; types: string[];
+  status: 'kund' | 'kontaktad' | 'potentiell'; types: string[];
 }
 
 declare global {

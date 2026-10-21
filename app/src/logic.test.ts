@@ -13,7 +13,7 @@ test('segmentCounts counts all, to contact, booked, customers and potential cust
     {status: 'kund', comms: [{kind: 'mail_ut', date: daysAgo(5)}], bookings: [{id: 'b', date: '2026-10-20'}]},
     {status: 'potentiell'}
   ];
-  expect(L().segmentCounts(cs)).toEqual({alla: 3, kontakta: 2, bokat: 1, kunder: 2, potentiella: 1});
+  expect(L().segmentCounts(cs)).toEqual({alla: 3, kontakta: 2, bokat: 1, kunder: 2, kontaktade: 0, potentiella: 1});
 });
 
 test('eventWhen: ongoing, today, tomorrow or a number of days', () => {

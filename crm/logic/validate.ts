@@ -47,7 +47,7 @@ const BOOKING = object({id: text, kind: text, title: text, date, time: text, dur
 const CUSTOMER = object({
   id: text, company: text, name: text, role: text, email: text, phone: text, website: text, city: text, notes: text,
   ext: anyObject,
-  status: oneOf('kund', 'potentiell'),
+  status: oneOf('kund', 'kontaktad', 'potentiell'),
   types: list(text), example: bool, createdAt: text, updatedAt: text, addedAt: date,
   comms: list(COMM), jobs: list(JOB), events: list(EVENT), bookings: list(BOOKING),
   followUp: object({date, note: text}),

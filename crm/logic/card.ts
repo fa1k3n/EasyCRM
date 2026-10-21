@@ -23,8 +23,8 @@ export const removeJobPatch = (c: Customer, id: string): Partial<Customer> => {
   const jobs = (c.jobs || []).filter(j => j.id !== id);
   return {jobs, lastContact: lastTouch({comms: c.comms || [], jobs})};
 };
-// Customer or potential customer: only the status changes, nothing else in the document
-export const statusPatch = (status: 'kund' | 'potentiell'): Partial<Customer> => ({status});
+// Customer, contacted (potential customer) or prospect: only the status changes, nothing else in the document
+export const statusPatch = (status: 'kund' | 'kontaktad' | 'potentiell'): Partial<Customer> => ({status});
 // The customer form: the fields trimmed and the customer types. The errors are text keys (the language files), not finished texts.
 interface CustomerForm { company?: string; name?: string; role?: string; email?: string; phone?: string; website?: string; city?: string; notes?: string; status: string; types: string[]; }
 export const customerFormPatch = (f: CustomerForm): {patch: Partial<Customer>; errors: string[]} => {

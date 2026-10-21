@@ -27,6 +27,17 @@ function BookingItem({b, onRemove, canWrite, pending}: {b: Booking; onRemove: ()
   );
 }
 
+/* A reminder whose day has come, highlighted at the top of the bookings */
+function FollowUpDue({c}: {c: CustomerDoc}) {
+  const L = logic();
+  if (!L.followUpDue(c)) return null;
+  return (
+    <div role="status" aria-label={t('followUpDueNow')} className="mt-2.5 rounded-lg border border-amber bg-amber-soft px-3 py-2 text-[13px] text-ink">
+      <b className="text-amber">{t('followUpDueNow')}</b> · {L.fmtDate(c.followUp!.date)}{c.followUp!.note ? ` – ${c.followUp!.note}` : ''}
+    </div>
+  );
+}
+
 /* The follow-up reminder: a date and a note. A reminder without a date counts as none. */
 function FollowUp({c, canWrite}: {c: CustomerDoc; canWrite: boolean}) {
   const L = logic();
@@ -48,6 +59,10 @@ function FollowUp({c, canWrite}: {c: CustomerDoc; canWrite: boolean}) {
     <form onSubmit={save} className="mt-3 flex flex-wrap items-center gap-2 border-t border-dashed border-line pt-3">
       <span className="basis-full text-[11px] font-semibold uppercase tracking-wider text-muted">{t('followUpLabel')}</span>
       <input type="date" aria-label={t('followUpDate')} value={date} onChange={e => setDate(e.target.value)} className="min-w-0 rounded-md border border-line bg-bg px-2.5 py-1.5" />
+      {[1, 2, 3].map(months => (
+        <button key={months} type="button" onClick={() => setDate(L.addMonths(L.todayISO(), months))}
+          className="rounded-full border border-line px-2.5 py-1 text-[13px] text-muted hover:bg-sunk hover:text-ink">{t('followUpInMonths', {months})}</button>
+      ))}
       <input aria-label={t('followUpNote')} placeholder={t('followUpNotePlaceholder')} value={note} onChange={e => setNote(e.target.value)}
         className="min-w-0 flex-[1_1_200px] rounded-md border border-line bg-bg px-2.5 py-1.5" />
       <button type="submit" disabled={pending} className="rounded-full border border-line bg-surface px-2.5 py-1 text-[13px] font-medium disabled:opacity-60">{t('save')}</button>
@@ -86,6 +101,7 @@ export default function Bookings({c}: {c: CustomerDoc}) {
         </h3>
         <span className="text-[13px] text-muted">{t('syncedWithCalendar')}</span>
       </div>
+      <FollowUpDue c={c} />
       {upcoming.length ? (
         <ul aria-label={t('bookings')} className="mt-2.5">
           {upcoming.map((b, i) => <BookingItem key={b.id || `${b.date}-${b.time}-${i}`} b={b} canWrite={canWrite} pending={pending} onRemove={() => remove(b.id!)} />)}

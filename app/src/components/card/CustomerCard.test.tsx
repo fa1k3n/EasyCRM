@@ -71,7 +71,7 @@ test('contact details: mail and phone links, and the website only as an http(s) 
 
 test('a potential customer from an agent shows why they fit; no jobs; an unsafe website is not a link', async () => {
   await show('c2');
-  expect(screen.getByText('Potentiell kund')).toBeTruthy();
+  expect(screen.getByText('Prospekt')).toBeTruthy();
   expect(screen.getByText('Växer och har nya medarbetare.')).toBeTruthy();
   expect(screen.queryByRole('heading', {name: /Jobb/})).toBeNull();
   expect(screen.queryByRole('link', {name: /javascript/})).toBeNull();

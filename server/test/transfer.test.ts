@@ -64,7 +64,7 @@ describe('POST /import', () => {
     bad.collections.customers.c3 = {status: 'gammal'};
     const res = await req('/import', json('POST', bad));
     expect(res.status).toBe(400);
-    expect((await res.json()).error.details).toEqual([{path: 'customers/c3: status', message: 'must be one of: kund, potentiell'}]);
+    expect((await res.json()).error.details).toEqual([{path: 'customers/c3: status', message: 'must be one of: kund, kontaktad, potentiell'}]);
     expect(await (await req('/customers')).json()).toEqual([]);
   });
 

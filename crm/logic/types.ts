@@ -42,7 +42,7 @@ interface Customer {
   id?: string; company?: string; name?: string; role?: string; email?: string; phone?: string; website?: string; city?: string; notes?: string;
   /** the extensions' own fields: ext[<extension id>] = any JSON, written only by that extension */
   ext?: Record<string, unknown>;
-  /** "kund" | "potentiell" */
+  /** "kund" | "kontaktad" (contact made, no job yet; shown as "potential customer") | "potentiell" (shown as "prospect"); missing = "kund" */
   status?: string;
   types?: string[]; example?: boolean; createdAt?: string; updatedAt?: string; addedAt?: ISODate;
   comms?: Comm[]; jobs?: Job[]; events?: CustomerEvent[]; bookings?: Booking[]; followUp?: FollowUp | null;
@@ -56,7 +56,8 @@ interface Customer {
 interface BusyItem { date?: ISODate; time?: string; endTime?: string; title?: string; eventId?: string; }
 
 /* ---------- What the logic returns ---------- */
-interface View { seg?: string; type?: string; q?: string; sort?: string; }
+/** seg: one segment (the MCP layer); status and flags: the quick filters (either within a list, both lists must hold) */
+interface View { seg?: string; status?: string[]; flags?: string[]; type?: string; q?: string; sort?: string; }
 interface ContactStatus { level: 'never' | 'over' | 'warn' | 'ok'; days: number | null; d: ISODate | null; }
 interface EventBadge { kind: 'offer' | 'soon'; count: number; }
 interface Conflict { date: ISODate; time: string; title: string; source: 'bokning' | 'kalender'; customerId?: string; }

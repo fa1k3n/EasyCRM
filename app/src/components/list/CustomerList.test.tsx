@@ -71,7 +71,7 @@ test('the stats count customers to contact, customers and potential ones; a clic
   await show();
   const toContact = screen.getByRole('button', {name: /2 att kontakta/});
   expect(screen.getByRole('button', {name: /3 kunder/})).toBeTruthy();
-  const potential = screen.getByRole('button', {name: /1 potentiella/});
+  const potential = screen.getByRole('button', {name: /1 prospekt/});
   fireEvent.click(potential);
   expect(rows()).toEqual(['c3']);
   fireEvent.click(potential);
@@ -133,11 +133,11 @@ test('clicking a row selects the customer, and the selected row is marked', asyn
 
 test('the chosen filter, type and sort are remembered (only the view, never customer data)', async () => {
   const {unmount} = await show();
-  fireEvent.click(within(screen.getByRole('group', {name: 'Filter'})).getByRole('button', {name: /Potentiella/}));
+  fireEvent.click(within(screen.getByRole('group', {name: 'Status'})).getByRole('button', {name: /Prospekt/}));
   fireEvent.change(screen.getByRole('combobox', {name: 'Sortering'}), {target: {value: 'namn'}});
   fireEvent.change(screen.getByRole('searchbox'), {target: {value: 'Fast'}});
   unmount();
-  expect(JSON.parse(localStorage.getItem('crm-view')!)).toEqual({seg: 'potentiella', type: 'alla', sort: 'namn'});
+  expect(JSON.parse(localStorage.getItem('crm-view')!)).toEqual({status: ['potentiell'], flags: [], type: 'alla', sort: 'namn'});
   await show();
   expect(rows()).toEqual(['c3']);
   expect((screen.getByRole('searchbox') as HTMLInputElement).value).toBe('');

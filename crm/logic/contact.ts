@@ -24,6 +24,13 @@ export function status(c: Customer): ContactStatus {
   return {level: days >= LIMIT ? 'over' : days >= WARN ? 'warn' : 'ok', days, d};
 }
 export const needsContact = (c: Customer): boolean => { const l = status(c).level; return l === 'over' || l === 'never'; };
+// The reminder to get in touch is due: its day has come and no contact or job has been logged on that day or later
+export function followUpDue(c: Customer): boolean {
+  const date = c.followUp?.date;
+  if (!date || date > todayISO()) return false;
+  const last = lastTouch(c);
+  return !last || last < date;
+}
 export function latestMail(c: Customer): Comm | null {
   let best: Comm | null = null;
   for (const m of c.comms||[]) if ((m.kind === 'mail_ut' || m.kind === 'mail_in') && (!best || m.date! > best.date!)) best = m;
@@ -34,7 +41,7 @@ export function daysLabel(st: ContactStatus): string {
   if (st.days === 0) return tx('today');
   return tx('daysAgo', {days: st.days!});
 }
-// The sort order "longest since contact": red first, then never contacted, then yellow, then the rest by days
-export const contactScore = (c: Customer): number => { const s = status(c); return s.level==='over' ? 3e6+s.days! : s.level==='never' ? 2e6 : s.level==='warn' ? 1e6+s.days! : s.days!; };
+// The sort order "longest since contact": due reminders first (the oldest first), then red, never contacted, yellow, and the rest by days
+export const contactScore = (c: Customer): number => { if (followUpDue(c)) return 4e6 + daysSince(c.followUp!.date!); const s = status(c); return s.level==='over' ? 3e6+s.days! : s.level==='never' ? 2e6 : s.level==='warn' ? 1e6+s.days! : s.days!; };
 // The day the customer turns red (90 days after the latest contact), or null if never contacted
 export const contactDeadline = (c: Customer): ISODate | null => { const d = lastTouch(c); return d ? addDays(d, LIMIT) : null; };

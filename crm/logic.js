@@ -188,6 +188,11 @@
 		d.setDate(d.getDate() + n);
 		return toISO(d);
 	};
+	var addMonths = (iso, n) => {
+		const [y, m, day] = iso.split("-").map(Number);
+		const last = new Date(y, m - 1 + n + 1, 0, 12);
+		return toISO(new Date(last.getFullYear(), last.getMonth(), Math.min(day, last.getDate()), 12));
+	};
 	var labels = (prefix, ids) => Object.fromEntries(ids.map((id) => [id, tx(`${prefix}.${id}`)]));
 	var kinds = () => labels("kind", [
 		"mail_ut",
@@ -231,6 +236,12 @@
 		const l = status(c).level;
 		return l === "over" || l === "never";
 	};
+	function followUpDue(c) {
+		const date = c.followUp?.date;
+		if (!date || date > todayISO()) return false;
+		const last = lastTouch(c);
+		return !last || last < date;
+	}
 	function latestMail(c) {
 		let best = null;
 		for (const m of c.comms || []) if ((m.kind === "mail_ut" || m.kind === "mail_in") && (!best || m.date > best.date)) best = m;
@@ -242,6 +253,7 @@
 		return tx("daysAgo", { days: st.days });
 	}
 	var contactScore = (c) => {
+		if (followUpDue(c)) return 4e6 + daysSince(c.followUp.date);
 		const s = status(c);
 		return s.level === "over" ? 3e6 + s.days : s.level === "never" ? 2e6 : s.level === "warn" ? 1e6 + s.days : s.days;
 	};
@@ -864,15 +876,19 @@
 		"kontakta",
 		"bokat",
 		"kunder",
+		"kontaktade",
 		"potentiella"
 	];
-	var inSegment = (c, seg) => seg === "kontakta" ? needsContact(c) : seg === "bokat" ? hasBooking(c) : seg === "kunder" ? c.status !== "potentiell" : seg === "potentiella" ? c.status === "potentiell" : true;
+	var statusOf = (c) => c.status === "kontaktad" || c.status === "potentiell" ? c.status : "kund";
+	var inSegment = (c, seg) => seg === "kontakta" ? needsContact(c) || followUpDue(c) : seg === "bokat" ? hasBooking(c) : seg === "kunder" ? statusOf(c) === "kund" : seg === "kontaktade" ? statusOf(c) === "kontaktad" : seg === "potentiella" ? statusOf(c) === "potentiell" : true;
+	var inFilters = (c, view) => (!view.status?.length || view.status.includes(statusOf(c))) && (!view.flags?.length || view.flags.some((f) => inSegment(c, f)));
 	var segmentCounts = (customers) => Object.fromEntries(SEGMENTS.map((s) => [s, customers.filter((c) => inSegment(c, s)).length]));
 	function filterCustomers(customers, view) {
 		const q = (view.q || "").trim().toLowerCase();
 		const items = customers.filter((c) => {
 			if (view.type && view.type !== "alla" && !customerTypes(c).includes(view.type)) return false;
 			if (view.seg && !inSegment(c, view.seg)) return false;
+			if (!inFilters(c, view)) return false;
 			if (q) {
 				if (![
 					c.company,
@@ -1110,7 +1126,7 @@
 		city: text,
 		notes: text,
 		ext: anyObject,
-		status: oneOf("kund", "potentiell"),
+		status: oneOf("kund", "kontaktad", "potentiell"),
 		types: list(text),
 		example: bool,
 		createdAt: text,
@@ -1208,6 +1224,9 @@
 		eventConflicts,
 		eventBadge,
 		customerTypes,
+		followUpDue,
+		addMonths,
+		statusOf,
 		validateCustomer,
 		newCustomerDefaults,
 		calendarConflicts,

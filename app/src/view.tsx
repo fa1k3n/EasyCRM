@@ -1,17 +1,23 @@
-/* What the list shows: segment, customer type, search and sort. Shared by the stats, the toolbar and the list.
- * Segment, type and sort are remembered in the browser (localStorage, only the view, never customer data); the
+/* What the list shows: the quick filters (statuses and flags), customer type, search and sort. Shared by the stats, the
+ * toolbar and the list. Filters, type and sort are remembered in the browser (localStorage, only the view, never customer data); the
  * search is not. Reading and writing localStorage may fail (private mode), and then the view simply is not kept. */
 import {createContext, useCallback, useContext, useEffect, useState, type ReactNode} from 'react';
 import {logic} from './logic';
 
-export type Segment = 'alla' | 'kontakta' | 'bokat' | 'kunder' | 'potentiella';
+export type Status = 'kund' | 'kontaktad' | 'potentiell';
+export type Flag = 'kontakta' | 'bokat';
 export type Sort = 'kontakt' | 'namn' | 'nyast';
-export interface ListView { seg: Segment; type: string; q: string; sort: Sort }
+/** status: show these statuses (none = all); flags: show customers with one of these (none = all); both must hold */
+export interface ListView { status: Status[]; flags: Flag[]; type: string; q: string; sort: Sort }
 
-const SEGMENTS: Segment[] = ['alla', 'kontakta', 'bokat', 'kunder', 'potentiella'];
+export const STATUSES: Status[] = ['kund', 'kontaktad', 'potentiell'];
+export const FLAGS: Flag[] = ['kontakta', 'bokat'];
 export const SORTS: Sort[] = ['kontakt', 'namn', 'nyast'];
 const KEY = 'crm-view';
-const DEFAULT: ListView = {seg: 'alla', type: 'alla', q: '', sort: 'kontakt'};
+const DEFAULT: ListView = {status: [], flags: [], type: 'alla', q: '', sort: 'kontakt'};
+// A tab saved by the version before the quick filters (seg), as the matching filter
+const OLD_TABS: Record<string, Partial<ListView>> = {kontakta: {flags: ['kontakta']}, bokat: {flags: ['bokat']}, kunder: {status: ['kund']}, potentiella: {status: ['potentiell']}};
+const only = <T,>(values: unknown, allowed: T[]): T[] => Array.isArray(values) ? allowed.filter(x => values.includes(x)) : [];
 
 function load(): ListView {
   try {
@@ -19,7 +25,9 @@ function load(): ListView {
     if (!s) return DEFAULT;
     return {
       ...DEFAULT,
-      seg: SEGMENTS.includes(s.seg) ? s.seg : 'alla',
+      status: only(s.status, STATUSES),
+      flags: only(s.flags, FLAGS),
+      ...(typeof s.seg === 'string' && !s.status && !s.flags ? OLD_TABS[s.seg] : {}),
       type: typeof s.type === 'string' ? s.type : 'alla',
       sort: SORTS.includes(s.sort) ? s.sort : 'kontakt'
     };
@@ -32,8 +40,8 @@ export function ViewProvider({children}: {children: ReactNode}) {
   const [view, set] = useState<ListView>(load);
   const setView = useCallback((patch: Partial<ListView>) => set(v => ({...v, ...patch})), []);
   useEffect(() => {
-    try { localStorage.setItem(KEY, JSON.stringify({seg: view.seg, type: view.type, sort: view.sort})); } catch { /* not kept */ }
-  }, [view.seg, view.type, view.sort]);
+    try { localStorage.setItem(KEY, JSON.stringify({status: view.status, flags: view.flags, type: view.type, sort: view.sort})); } catch { /* not kept */ }
+  }, [view.status, view.flags, view.type, view.sort]);
   return <ViewContext.Provider value={{view, setView}}>{children}</ViewContext.Provider>;
 }
 
